@@ -8,7 +8,7 @@ setup(
         'console_scripts': [
             'parse_git=git_analytics.git_log_parsing:main',
             'prep_data=git_analytics.data_preparation:main',
-            'analyze=git_analytics.analysis:main',
+            'analyze=git_analytics.launch_dashboard:main',
             ],
     }
-)
+)         
