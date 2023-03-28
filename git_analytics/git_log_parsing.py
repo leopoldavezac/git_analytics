@@ -129,7 +129,7 @@ def main() -> None:
 
     config_manager = instanciate_config_manager(CMD_NM)
     parse_git_log(config_manager)
-    print('\nOK - git log of %s sucessfully parsed.\n' % config_manager['codebase_name'])
+    print('\nOK - git log of %s sucessfully parsed.\n' % config_manager['codebase_nm'])
 
 
 if __name__ == '__main__': 

@@ -39,10 +39,13 @@ class CommitFilesTagger:
 
         path = self.src_struct['path']
         path = sub('^\\./|^/', '', path)
-        
-        self.df['is_src'] = self.df.file_nm.str.slice(
-            0, len(path)
-        ) == path
+
+        if path == '.':
+            self.df['is_src'] = True
+        else:
+            self.df['is_src'] = self.df.file_nm.str.slice(
+                0, len(path)
+            ) == path
 
     def __get_component_nms_regex(self, component_struct):
 

@@ -1,5 +1,3 @@
-from os import listdir
-
 from numpy import zeros
 import pandas as pd
 
@@ -10,13 +8,12 @@ from dash import Dash, html, dcc, Output, Input
 from git_analytics.utilities import read
 from git_analytics.cmd_chaining import run_predessor_if_needed
 from git_analytics.fig_generation import FigGenerator
-from git_analytics.config_management import instanciate_config_manager, ConfigManager
+from git_analytics.config_management import ConfigManager
 
 CMD_NM = 'analyze'
 
 MIN_PROP_OF_TOP_TO_BE = 0.1
 INPUT_PERSISTENCE_LOCATION = False
-
 
 class WebApp:
 
@@ -28,8 +25,7 @@ class WebApp:
         self.codebase_nm = codebase_nm
         self.df_base = read(codebase_nm, 'commits_files')
 
-        server = Flask(__name__)
-        self.app = Dash(__name__, server=server)
+        self.app = Dash(__name__)
 
         self.set_initial_selection()
 
@@ -242,30 +238,21 @@ class WebApp:
             figs = self.get_figs(df)
             input_val = self.get_input_val()
             return figs, *input_val
+
+    def get_app_server(self):
+
+        return self.app.server
         
     def run_server(self):
 
         self.app.run(debug=True)
 
 
-def analyze(config_manager:ConfigManager) -> None:
+def analyze(config_manager:ConfigManager) -> WebApp:
 
     run_predessor_if_needed(CMD_NM, config_manager)
-
     web_app = WebApp(config_manager['stats'], config_manager['codebase_nm'])
     web_app.set_layout()
     web_app.set_callback()
-    web_app.run_server()
 
-def main() -> None:
-    config_manager = instanciate_config_manager(CMD_NM)
-    analyze(config_manager)
-
-if __name__ == '__main__':
-    main()
-
-
-
-    
-
-
+    return web_app

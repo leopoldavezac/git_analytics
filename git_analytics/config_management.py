@@ -1,6 +1,7 @@
 from typing import Union
 
 from os.path import join
+import sys
 
 from argparse import Namespace
 
@@ -8,6 +9,7 @@ from yaml import load, FullLoader
     
 from argparse import ArgumentParser, Namespace
     
+DEBUG_CODEBASE_NM = 'pydici'
 
 class CLIArgumentParser:
 
@@ -102,6 +104,8 @@ class CLIArgumentParser:
 
     def __init__(self, cmd_nm:str) -> None:
 
+        self.cmd_nm = cmd_nm
+
         cmd_desc = self._CMD_NM_TO_DESC[cmd_nm]
         self.parser = ArgumentParser(description=cmd_desc)
         
@@ -118,7 +122,17 @@ class CLIArgumentParser:
                     flags = arg_spec.pop('flags')
                     self.parser.add_argument(*flags, **arg_spec)
 
+    def handle_debug_mode_args(self) -> None:
+
+        # sys.args is updated to avoid conflict with flask arg parser
+        if sys.argv[1] == 'run':
+            sys.argv = [sys.argv[0], DEBUG_CODEBASE_NM]
+
     def parse_args(self) -> None:
+
+        if self.cmd_nm == 'analyze':
+            self.handle_debug_mode_args()
+
         self.args = self.parser.parse_args()
         
     def get_args(self) -> Namespace:
