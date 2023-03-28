@@ -7,26 +7,27 @@ class CommitFilesTagger:
     def __init__(
         self,
         df,
-        repo_struct,
+        src_path,
+        module_depth,
+        component_nms,
+        component_depth
         ) -> None:
         
-        self.src_struct = repo_struct['src']
+        self.src_path = src_path
         self.df = df
 
-        if self.src_struct['component'] is not None:
+        self.src_struct = {
+            'path':src_path,
+            'module_depth':module_depth,
+            'component':{'depth':component_depth, 'nms':component_nms}
+        }
+
+        if self.src_struct['component']['nms'] is not None:
             self.src_struct['component_and_module_aligned'] = (
                 self.src_struct['component']['depth'] == self.src_struct['module_depth']
             )
         else:
             self.src_struct['component_and_module_aligned'] = False
-
-        if 'test' in repo_struct.keys():
-            self.test_struct = repo_struct['test']
-            self.test_struct['component_and_module_aligned'] = (
-                self.test_struct['component']['depth'] == self.test_struct['module_depth']
-            )
-        else:
-            self.test_struct = None
 
     def __tag_file_ext(self):
 
@@ -34,12 +35,12 @@ class CommitFilesTagger:
         self.df['ext'] = self.df.file_nm.str.extract(lang_regex) 
         self.df.ext.fillna('other', inplace=True)
 
-    def __tag_type(self, type_nm:str) -> None:
+    def __tag_type(self) -> None:
 
-        path = getattr(self, '%s_struct' % type_nm)['path']
+        path = self.src_struct['path']
         path = sub('^\\./|^/', '', path)
         
-        self.df['is_%s' % type_nm] = self.df.file_nm.str.slice(
+        self.df['is_src'] = self.df.file_nm.str.slice(
             0, len(path)
         ) == path
 
@@ -47,17 +48,15 @@ class CommitFilesTagger:
 
         return '(%s)' % '|'.join(component_struct['nms'])
 
-    def __tag_component(self, type_nm:str) -> None:
+    def __tag_component(self) -> None:
 
-        filter_type = self.df['is_%s' % type_nm]
-
-        component_struct = getattr(self, '%s_struct' % type_nm)['component']
+        component_struct = getattr(self, 'src_struct')['component']
         component_depth = component_struct['depth']
         component_nms_regex = self.__get_component_nms_regex(component_struct)
 
-        self.df.loc[filter_type, 'component_nm'] = (
+        self.df.loc[self.df['is_src'], 'component_nm'] = (
             self.df
-            .loc[filter_type]
+            .loc[self.df['is_src']]
             .file_nm
             .str.split('/', expand=True)
             .iloc[:,component_depth]
@@ -68,14 +67,13 @@ class CommitFilesTagger:
 
         self.df.component_nm.fillna('other', inplace=True)
 
-    def __tag_module(self, type_nm):
+    def __tag_module(self):
 
-        repo_struct = getattr(self, '%s_struct' % type_nm)
-        filter_type = self.df['is_%s' % type_nm]
+        repo_struct = getattr(self, 'src_struct')
 
-        self.df.loc[filter_type, 'module_nm'] = (
+        self.df.loc[self.df.is_src, 'module_nm'] = (
             self.df
-            .loc[filter_type]
+            .loc[self.df.is_src]
             .file_nm
             .str.split('/', expand=True)
             .iloc[:,repo_struct['module_depth']]
@@ -86,9 +84,9 @@ class CommitFilesTagger:
 
         if repo_struct['component_and_module_aligned']:
             component_nms_regex = self.__get_component_nms_regex(repo_struct['component'])
-            self.df.loc[filter_type, 'module_nm'] = (
+            self.df.loc[self.df.is_src, 'module_nm'] = (
                 self.df
-                .loc[filter_type]
+                .loc[self.df.is_src]
                 .module_nm
                 .str.replace(component_nms_regex, '', regex=True)
                 .str.replace('(\\.|_|-)$', '', regex=True)
@@ -97,18 +95,13 @@ class CommitFilesTagger:
        
     def __tag(self):
 
-        type_nms = ['src']
-        type_nms += ['test'] if self.test_struct else []
-
         self.__tag_file_ext()
-
-        for type_nm in type_nms:
-            self.__tag_type(type_nm)
+        self.__tag_type()
             
-            if self.src_struct['component'] is not None:
-                self.__tag_component(type_nm)
+        if self.src_struct['component']['nms'] is not None:
+            self.__tag_component()
 
-            self.__tag_module(type_nm)
+        self.__tag_module()
 
         
 

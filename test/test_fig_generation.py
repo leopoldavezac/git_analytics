@@ -53,9 +53,9 @@ DF_COMMITS_FILES = pd.DataFrame(
             'specialization', ['author_nm', 'module_nm'], 'n_lines_inserted', 1, 'sum', 'M', 0, DF_COMMITS_FILES,
             pd.DataFrame(
                 [
-                    [np.nan, 0.4666666667],
-                    [0.7272727273, 0.1333333333],
-                    [0.2727272727, 0.4],
+                    [np.nan, 0.47],
+                    [0.73, 0.13],
+                    [0.27, 0.4],
                 ],
                 index=pd.Index(['dev_1', 'dev_2', 'dev_3'], name='author_nm'),
                 columns=pd.Index(['shittier_code', 'shitty_code'], name='module_nm')

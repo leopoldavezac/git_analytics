@@ -2,7 +2,13 @@ from os.path import join
 
 from yaml import load, FullLoader
 
-from pandas import read_parquet, to_datetime, DataFrame, concat
+from pandas import (
+    read_parquet,
+    to_datetime,
+    DataFrame, 
+    concat,
+    read_csv
+)
 
 VAR_NM_TO_REF_TYPE = {
     'id':'string',
@@ -22,6 +28,26 @@ VAR_NM_TO_REF_TYPE = {
 
 DATA_PATH = './data'
 CONFIG_PATH = './config'
+
+
+
+def get_parsed_git_log(codebase_nm:str, log_level:str) -> DataFrame:
+    
+    file_path = join(DATA_PATH, '%s_raw_%s.csv' % (codebase_nm, log_level))
+    return read_csv(file_path)
+
+def save_as_parquet(df:DataFrame, codebase_nm:str, log_level:str) -> None:
+
+    file_path = join(DATA_PATH, '%s_clean_%s.parquet' % (codebase_nm, log_level))
+    df.to_parquet(file_path, engine='pyarrow', version="2.4")
+
+
+def read(codebase_nm:str, log_level:str) -> DataFrame:
+
+    file_path = join(DATA_PATH, '%s_clean_%s.parquet' % (codebase_nm, log_level))
+    df = read_parquet(file_path, engine='pyarrow')
+    return df.set_index('creation_dt')
+
 
 def load_config(scope_nm):
 
@@ -76,19 +102,6 @@ def update_with_ref_types(df):
     return df
 
 
-def save_as_parquet(df, file_nm):
-
-    file_path = join(DATA_PATH, '%s.parquet' % file_nm)
-    df.to_parquet(file_path, engine='pyarrow', version="2.4")
-
-
-def read(file_nm):
-
-    file_path = join(DATA_PATH, '%s.parquet' % file_nm)
-    df = read_parquet(file_path, engine='pyarrow')
-    return df.set_index('creation_dt')
-
-
 def fix_new_to_newest(dfx):
 
     return (
@@ -108,15 +121,15 @@ def fix_new_to_newest(dfx):
 
 def handle_root_files(dfx):
 
-    root_file_filter = dfx.old == ""
+    root_file_filter = dfx.root_file == False
 
     if root_file_filter.sum() == 0:
-        return dfx
+        return dfx.drop(columns='root_file')
     
     dfx.loc[root_file_filter, 'old'] = dfx.loc[root_file_filter, 'prefix']
     dfx.loc[root_file_filter, 'prefix'] = ""
 
-    return dfx
+    return dfx.drop(columns='root_file')
 
 
 def handle_file_renaming(df_commits_files):
@@ -131,8 +144,16 @@ def handle_file_renaming(df_commits_files):
     mapping = (
         df_commits_files
         .loc[filter_renaming_file]
-        .file_nm.str.extract(regex_rename)
-        .set_axis(['prefix', 'old', 'new', 'suffix'], axis=1)
+        .pipe(lambda dfx: (
+            dfx
+            .file_nm.str.extract(regex_rename)
+            .set_axis(['prefix', 'old', 'new', 'suffix'], axis=1)
+            .assign(root_file = lambda _: (
+                dfx
+                .file_nm.str.split(' => ', expand=True).iloc[:,0]
+                .str.contains('/')
+            ))
+        ))
         .pipe(handle_root_files)
         .assign(
             old = lambda dfx: dfx.prefix + dfx.old + dfx.suffix,

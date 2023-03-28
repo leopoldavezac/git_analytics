@@ -1,0 +1,82 @@
+Team Stability:
+  fig_gen_arg : 
+    concept : stability
+    freq : M
+    entity : author_nm
+    mesure : n_code_lines_inserted
+    aggfunc : sum
+    normalize_axis : 1
+    unstack_level : 0
+  source_df_nm : commits_files
+
+Module Stability:
+  fig_gen_arg : 
+    concept : stability
+    freq : M
+    entity : module_nm
+    mesure : n_code_lines_inserted
+    aggfunc : sum
+    normalize_axis : 1
+    unstack_level : 0
+  source_df_nm : commits_files
+
+# Component Stability:
+#   fig_gen_arg : 
+#     concept : stability
+#     freq : M
+#     entity : component_nm
+#     mesure : n_code_lines_inserted
+#     aggfunc : sum
+#     normalize_axis : 1
+#     unstack_level : 0
+#   source_df_nm : commits_files
+
+Team Evolution:
+  fig_gen_arg : 
+    concept : evolution
+    freq : M
+    mesure : author_nm
+    aggfunc : nunique
+  source_df_nm : commits_files
+
+Activity Evolution:
+  fig_gen_arg : 
+    concept : evolution
+    freq : M
+    mesure : n_code_lines_inserted
+    aggfunc : sum
+  source_df_nm : commits_files
+
+Module Size:
+  fig_gen_arg : 
+    concept : size
+    entity : module_nm
+    mesure : n_code_lines_inserted
+    aggfunc : sum
+  source_df_nm : commits_files
+
+# Component Size:
+#   fig_gen_arg : 
+#     concept : size
+#     entity : component_nm
+#     mesure : n_code_lines_inserted
+#     aggfunc : sum
+#   source_df_nm : commits_files
+
+Lang Repartition:
+  fig_gen_arg : 
+    concept : repartition
+    entity : ext
+    mesure : n_code_lines_inserted
+    aggfunc : sum
+  source_df_nm : commits_files
+
+Team Specialization:
+  fig_gen_arg : 
+    concept : specialization
+    entity : ['author_nm', 'module_nm']
+    mesure : n_code_lines_inserted
+    aggfunc : sum
+    normalize_axis : 1
+    unstack_level : 0
+  source_df_nm : commits_files

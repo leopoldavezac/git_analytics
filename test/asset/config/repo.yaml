@@ -1,6 +1,0 @@
-path: ./test/asset/repo/RandomRewardBot
-repo_struct:
-  src:
-    path: './random_reward_bot'
-    component: NULL
-    module_depth: 1

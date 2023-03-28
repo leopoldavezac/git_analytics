@@ -5,21 +5,35 @@ import pandas as pd
 
 from pandas.testing import assert_frame_equal
 
+from git_analytics.config_management import ConfigManager
+
 import git_analytics.data_preparation
 import git_analytics.utilities
+import git_analytics.cmd_chaining
+import git_analytics.git_log_parsing
 
 
 
-def test_data_preparation(mocker): #integration_test
+def test_prep_data(mocker):
 
-    mocker.patch.object(
-        git_analytics.utilities,
-        'CONFIG_PATH',
-        './test/asset/config'
-        )
+    config_manager = ConfigManager()
+    config_manager.codebase_nm = 'random_reward_bot'
+    config_manager.path_to_repo = "./test/asset/repo/RandomRewardBot"
+    config_manager.src_path = './random_reward_bot'
+    config_manager.module_depth = 1
     
     mocker.patch.object(
         git_analytics.utilities,
+        'DATA_PATH',
+        './test/temp/data'
+        )
+    mocker.patch.object(
+        git_analytics.cmd_chaining,
+        'DATA_PATH',
+        './test/temp/data'
+        )
+    mocker.patch.object(
+        git_analytics.git_log_parsing,
         'DATA_PATH',
         './test/temp/data'
         )
@@ -42,7 +56,7 @@ def test_data_preparation(mocker): #integration_test
         )
         .astype({
             'id':'string',
-            'author_nm':'category',
+            'author_nm':'string',
             'msg':'string',
             'n_code_lines_inserted':'uint32'
         })
@@ -71,13 +85,13 @@ def test_data_preparation(mocker): #integration_test
         )
         .astype({
             'commit_id':'string',
-            'author_nm':'category',
+            'author_nm':'string',
             'file_nm':'string',
             'n_code_lines_inserted':'uint32',
             'n_code_lines_deleted':'uint32',
-            'ext':'category',
+            'ext':'string',
             'is_src':'bool',
-            'module_nm':'category',
+            'module_nm':'string',
         })
         .assign(creation_dt = lambda dfx: pd.to_datetime(dfx.creation_dt, utc=True))
     .loc[:,['commit_id', 'file_nm', 'ext', 'is_src', 'module_nm', 'n_code_lines_inserted', 'n_code_lines_deleted', 'author_nm', 'creation_dt']]
@@ -86,12 +100,13 @@ def test_data_preparation(mocker): #integration_test
 
     os.system('unzip test/asset/repo.zip') #test repo is stored as zip to avoid maintaning two git repo
 
-    git_analytics.data_preparation.main()
+    git_analytics.data_preparation.prepare_data(config_manager)
 
-    obtained_commits = pd.read_parquet('./test/temp/data/commits.parquet')
-    obtained_commits_files = pd.read_parquet('./test/temp/data/commits_files.parquet')
+    obtained_commits = pd.read_parquet('./test/temp/data/random_reward_bot_clean_commits.parquet')
+    obtained_commits_files = pd.read_parquet('./test/temp/data/random_reward_bot_clean_commits_files.parquet')
   
     assert_frame_equal(EXPECTED_COMMITS, obtained_commits)
     assert_frame_equal(EXPECTED_COMMITS_FILES, obtained_commits_files)
 
     os.system('rm -R test/asset/repo')
+    os.system('rm test/temp/data/*')

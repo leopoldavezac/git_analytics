@@ -1,3 +1,5 @@
+from os import listdir
+
 from numpy import zeros
 import pandas as pd
 
@@ -5,10 +7,13 @@ from flask import Flask
 
 from dash import Dash, html, dcc, Output, Input
 
-from utilities import read, load_config
-from fig_generation import FigGenerator
+from git_analytics.utilities import read
+from git_analytics.cmd_chaining import run_predessor_if_needed
+from git_analytics.fig_generation import FigGenerator
+from git_analytics.config_management import instanciate_config_manager, ConfigManager
 
-CONFIG_FILE_NM = 'figs'
+CMD_NM = 'analyze'
+
 MIN_PROP_OF_TOP_TO_BE = 0.1
 INPUT_PERSISTENCE_LOCATION = False
 
@@ -17,10 +22,11 @@ class WebApp:
 
     ENTITY_INPUT_NMS = ["module_nm", "component_nm", "author_nm", "ext"]
 
-    def __init__(self, config) -> None:
+    def __init__(self, stats:dict, codebase_nm:str) -> None:
 
-        self.config = config
-        self.df_base = read('commits_files')
+        self.stats = stats
+        self.codebase_nm = codebase_nm
+        self.df_base = read(codebase_nm, 'commits_files')
 
         server = Flask(__name__)
         self.app = Dash(__name__, server=server)
@@ -121,9 +127,9 @@ class WebApp:
 
         figs = []
 
-        for _, fig_config in self.config.items():
+        for _, stat_config in self.stats.items():
 
-            fig_gen = FigGenerator(**fig_config['fig_gen_arg'])
+            fig_gen = FigGenerator(**stat_config['fig_gen_arg'])
             fig = fig_gen.get_fig(df)
             figs.append(dcc.Graph(figure=fig))
 
@@ -242,11 +248,24 @@ class WebApp:
         self.app.run(debug=True)
 
 
-if __name__ == '__main__':
-    config = load_config(CONFIG_FILE_NM)
-    web_app = WebApp(config)
+def analyze(config_manager:ConfigManager) -> None:
+
+    run_predessor_if_needed(CMD_NM, config_manager)
+
+    web_app = WebApp(config_manager['stats'], config_manager['codebase_nm'])
     web_app.set_layout()
     web_app.set_callback()
     web_app.run_server()
+
+def main() -> None:
+    config_manager = instanciate_config_manager(CMD_NM)
+    analyze(config_manager)
+
+if __name__ == '__main__':
+    main()
+
+
+
+    
 
 

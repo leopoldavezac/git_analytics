@@ -2,8 +2,7 @@ __pycache__
 .pytest_cache
 .vscode
 git_analytics.egg-info
-todos.md
-/config/figs.yaml
-/config/repo.yaml
+notes.md
 /data/*.parquet
 test/temp/data/*.parquet
+.ipynb_checkpoints

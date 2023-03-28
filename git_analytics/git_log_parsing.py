@@ -2,14 +2,19 @@ from subprocess import run
 
 from pandas import DataFrame
 
+from git_analytics.config_management import instanciate_config_manager, ConfigManager
+
+DATA_PATH = './data'
+
 PRETTY_FORMAT = '+++%H\t%ad\t%an\t%s'
+CMD_NM = 'parse_git'
 
 class GitLogParser():
 
 
-    def __init__(self, path_to_dir):
+    def __init__(self, path_to_repo):
 
-        self.path_to_dir = path_to_dir
+        self.path_to_repo = path_to_repo
 
     def __run_command(self, command):
         process = run(command.split(" "), capture_output=True)
@@ -22,7 +27,9 @@ class GitLogParser():
     
     def __get_log(self):
 
-        command = "git -C %s log --all -M -C --numstat --date=iso --pretty=format:%s" % (self.path_to_dir, PRETTY_FORMAT)
+        command = "git -C %s log --all -M -C --numstat --date=iso --pretty=format:%s" % (
+            self.path_to_repo, PRETTY_FORMAT
+            )
 
         return self.__run_command(command)
 
@@ -66,7 +73,7 @@ class GitLogParser():
         log[-1] += '\n' #so last block can be dealt like the others ones
 
         self.commits = []
-        self.files = []
+        self.commits_files = []
 
         for commit_log in log:
 
@@ -79,32 +86,52 @@ class GitLogParser():
             commit_files_info = self.__get_files_info(commit_info[0], commit_log[1:])
 
             self.commits.append(commit_info)
-            self.files += commit_files_info
+            self.commits_files += commit_files_info
 
-        self.commits = DataFrame(
+        self.df_commits = DataFrame(
             self.commits,
             columns=['id', 'creation_dt', 'author_nm', 'msg']
         )
-        self.files = DataFrame(
-            self.files,
+        self.df_commits_files = DataFrame(
+            self.commits_files,
             columns=['commit_id', 'file_nm', 'n_lines_inserted', 'n_lines_deleted']
         )
 
 
-    def get_commits_info(self):
+    def get_parsed_commits(self):
         try:
-            return self.commits
+            return self.df_commits
         except AttributeError:
             self.__parse_log(self.__get_log())
-            return self.commits
+            return self.df_commits
 
-    def get_commits_files_info(self):
+    def get_parsed_commits_files(self):
 
         try:
-            return self.files
+            return self.df_commits_files
         except AttributeError:
             self.__parse_log(self.__get_log())
-            return self.files
+            return self.df_commits_files
 
 
+def parse_git_log(config_manager:ConfigManager) -> None:
+
+    path_to_repo = config_manager['path_to_repo']
+    git_log_parser = GitLogParser(path_to_repo)
+    df_commits = git_log_parser.get_parsed_commits()
+    df_commits_files = git_log_parser.get_parsed_commits_files()
+
+    codebase_name = config_manager['codebase_nm']
+    df_commits.to_csv('%s/%s_raw_commits.csv' % (DATA_PATH, codebase_name), index=False)
+    df_commits_files.to_csv('%s/%s_raw_commits_files.csv' % (DATA_PATH, codebase_name), index=False)
+
+def main() -> None:
+
+    config_manager = instanciate_config_manager(CMD_NM)
+    parse_git_log(config_manager)
+    print('\nOK - git log of %s sucessfully parsed.\n' % config_manager['codebase_name'])
+
+
+if __name__ == '__main__': 
+    main()
     

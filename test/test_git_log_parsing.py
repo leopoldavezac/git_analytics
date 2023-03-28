@@ -47,8 +47,8 @@ def test_git_log_parsing():
     parser = GitLogParser('None') # get log will not be used
 
     parser._GitLogParser__parse_log(INPUT)
-    obtained_commit = parser.get_commits_info()
-    obtained_files = parser.get_commits_files_info()
+    obtained_commit = parser.get_parsed_commits()
+    obtained_files = parser.get_parsed_commits_files()
 
     assert_frame_equal(obtained_commit, EXPECTED_COMMIT)
     assert_frame_equal(obtained_files, EXPECTED_FILES)
@@ -69,6 +69,6 @@ def test_handle_tab_in_commit_msg():
     parser = GitLogParser('None') # get log will not be used
 
     parser._GitLogParser__parse_log(INPUT)
-    obtained_commit = parser.get_commits_info()
+    obtained_commit = parser.get_parsed_commits()
 
     assert_frame_equal(obtained_commit, EXPECTED_COMMIT)

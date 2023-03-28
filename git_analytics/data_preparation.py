@@ -1,7 +1,8 @@
-from git_analytics.git_log_parsing import GitLogParser
 from git_analytics.commit_files_tagging import CommitFilesTagger
+from git_analytics.config_management import ConfigManager, instanciate_config_manager
+from git_analytics.cmd_chaining import run_predessor_if_needed
 from git_analytics.utilities import (
-    load_config,
+    get_parsed_git_log,
     add_agg_column_on_id,
     denormalize_cols_on_id,
     update_with_ref_types,
@@ -11,20 +12,33 @@ from git_analytics.utilities import (
     AuthorNameGrouper
 )
 
-def main():
+CMD_NM = 'prep_data'
 
-    config = load_config('repo')
+def prepare_data(config_manager:ConfigManager) -> None:
 
-    git_log_parser = GitLogParser(config['path'])
-    df_commits = git_log_parser.get_commits_info()
-    df_commits_files = git_log_parser.get_commits_files_info()
+    run_predessor_if_needed(CMD_NM, config_manager)
+
+    df_commits = get_parsed_git_log(config_manager['codebase_nm'], 'commits')
+    df_commits_files = get_parsed_git_log(config_manager['codebase_nm'], 'commits_files')
 
     author_nm_grouper = AuthorNameGrouper()
     author_nm_grouper.fit(df_commits.author_nm)
-    df_commits['author_nm'] = author_nm_grouper.transform(df_commits.author_nm)    
+    df_commits['author_nm'] = author_nm_grouper.transform(df_commits.author_nm)   
+
     df_commits_files = handle_file_renaming(df_commits_files)
 
-    commits_files_tagger = CommitFilesTagger(df_commits_files, config['repo_struct'])
+    src_path = config_manager['src_path']
+    module_depth = config_manager['module_depth']
+    component_nms = config_manager['component_nms']
+    component_depth = config_manager['component_depth']
+
+    commits_files_tagger = CommitFilesTagger(
+        df_commits_files,
+        src_path,
+        module_depth,
+        component_nms,
+        component_depth
+        )
     df_commits_files = commits_files_tagger.get_tagged_files()
 
     df_commits_files = get_n_code_lines_only(df_commits_files)    
@@ -45,10 +59,16 @@ def main():
     df_commits = update_with_ref_types(df_commits)
     df_commits_files = update_with_ref_types(df_commits_files)
 
-    save_as_parquet(df_commits, 'commits')
-    save_as_parquet(df_commits_files, 'commits_files')
+    save_as_parquet(df_commits, config_manager['codebase_nm'], 'commits')
+    save_as_parquet(df_commits_files, config_manager['codebase_nm'], 'commits_files')
+
+
+def main() -> None:
+    config_manager = instanciate_config_manager(CMD_NM)
+    prepare_data(config_manager)
+    print('\nOK - log data of %s has been sucessfully prepared.\n' % config_manager['codebase_nm'])
 
 
 if __name__ == '__main__':
-
     main()
+   
