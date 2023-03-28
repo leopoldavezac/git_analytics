@@ -1,6 +1,6 @@
 from re import sub
 
-LANGS = ['py', 'php', 'cpp', 'cs', 'java', 'js', 'ts']
+LANGS = ['py', 'php', 'cpp', 'cs', 'java', 'js', 'ts', 'csproj']
 
 class CommitFilesTagger:
 
@@ -61,6 +61,7 @@ class CommitFilesTagger:
             .file_nm
             .str.split('/', expand=True)
             .iloc[:,component_depth]
+            .str.lower()
             .str.extract(component_nms_regex)
             .values
         )
@@ -78,6 +79,7 @@ class CommitFilesTagger:
             .file_nm
             .str.split('/', expand=True)
             .iloc[:,repo_struct['module_depth']]
+            .str.lower()
             .str.replace('(\\.%s)$' % '|\\.'.join(LANGS), '', regex=True)
             .values
         )

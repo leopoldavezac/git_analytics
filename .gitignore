@@ -5,4 +5,5 @@ git_analytics.egg-info
 todos.md
 /config/figs.yaml
 /config/repo.yaml
-/data
+/data/*.parquet
+test/temp/data/*.parquet
