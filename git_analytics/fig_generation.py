@@ -11,9 +11,9 @@ CONCEPT_TO_FIG_ARG_STRUCT = {
 }
 
 CONCEPT_TO_OPERATION_SUITE = {
-    'stability' : ['groupby', 'resample', 'agg', 'unstack', 'normalize', 'T'],
+    'stability' : ['groupby', 'resample', 'agg', 'unstack', 'normalize', 'T', 'round', 'replace'],
     'evolution' : ['resample', 'agg', 'reset_index'],
-    'specialization' : ['groupby', 'agg', 'unstack', 'normalize', 'T'],
+    'specialization' : ['groupby', 'agg', 'unstack', 'normalize', 'T', 'round', 'replace'],
     'size' : ['groupby', 'agg', 'reset_index'],
     'repartition' : ['groupby', 'agg', 'reset_index']
 }
@@ -24,10 +24,12 @@ OPERATION_NM_TO_ARG_NM = {
     'agg':'mesure',
     'unstack':'unstack_level',
     'normalize':'normalize_axis',
-    'reset_index':None,
-    'sum':None,
-    'nunique':None,
-    'count':None
+    'reset_index':'NONE',
+    'sum':'NONE',
+    'nunique':'NONE',
+    'count':'NONE',
+    'replace':'REPLACE_ARG',
+    'round':'ROUND_ARG',
 
 }
 
@@ -39,17 +41,9 @@ CONCEPT_TO_FIG = {
     'size':bar
 }
 
-# CONCEPT_TO_FIG_LAYOUT = {
-#     'stability':{'yaxis':{'height':'custom'}},
-#     'evolution':{},
-#     'specialization':{},
-#     'repartition':{},
-#     'size':{}
-# }
-
 CONCEPT_TO_FIG_CUSTOM_DIMS = {
     'stability':['height'],
-    # 'specialization':['height', 'width'],
+    'specialization':['height', 'width'],
     'specialization':[],
     'evolution':[],
     'repartition':[],
@@ -69,12 +63,35 @@ CONCEPT_TO_BASE_LAYOUT = {
     'size':{'yaxis':{'tickmode':'linear'}}
 }
 
+class UnknownOperation(Exception):
+    pass
+
 class Transformer:
 
-    def __init__(self, concept, mesure, entity=None, normalize_axis=1, aggfunc='sum', freq='M', unstack_level=0):
+    _REPLACE_ARG = {0:None}
+    _ROUND_ARG = 2
+    _NONE = None
 
-        self.operations = deepcopy(CONCEPT_TO_OPERATION_SUITE[concept])
-        self.operation_arg_nm_to_value = {'entity':entity, 'mesure':mesure, 'normalize_axis':normalize_axis, 'freq':freq, 'unstack_level':unstack_level, None:None}
+    def __init__(
+        self,
+        concept,
+        mesure,
+        entity=None,
+        normalize_axis=1,
+        aggfunc='sum',
+        freq='M',
+        unstack_level=0
+        ):
+
+        self._concept = concept
+        self._mesure = mesure
+        self._entity = entity
+        self._normalize_axis = normalize_axis
+        self._aggfunc = aggfunc
+        self._freq = freq
+        self._unstack_level = unstack_level
+        
+        self.operations = deepcopy(CONCEPT_TO_OPERATION_SUITE[concept]) #why ?
         self.__fill_agg_placeholder_operation(aggfunc, mesure)
 
     def __fill_agg_placeholder_operation(self, aggfunc, mesure):
@@ -87,9 +104,11 @@ class Transformer:
     def __get_operation_arg(self, operation_nm):
 
         arg_nm = OPERATION_NM_TO_ARG_NM[operation_nm]
-        arg_value = self.operation_arg_nm_to_value[arg_nm]
-
-        return arg_value
+        if arg_nm:
+            arg_value = getattr(self, '_%s' % arg_nm)
+            return arg_value
+        else:
+            return None
 
     def __get_operation_result(self, df, operation_nm):
         
@@ -103,8 +122,11 @@ class Transformer:
                 return getattr(df, operation_nm)(arg_value)
             else:
                 return getattr(df, operation_nm)()
-        except AttributeError: #operation is normalize -> custom operation
-            return df.pipe(lambda dfx: dfx.divide(dfx.sum(axis=arg_value), axis=(not bool(arg_value))))
+        except AttributeError: #custom operation
+            if operation_nm == 'normalize':
+                return df.pipe(lambda dfx: dfx.divide(dfx.sum(axis=arg_value), axis=(not bool(arg_value))))
+            else:
+                raise UnknownOperation('Operation: %s is not supported' % operation_nm)
 
     def get_transformed(self, df):
 
@@ -116,11 +138,18 @@ class Transformer:
 
 class FigGenerator(Transformer):
 
-    def __init__(self, concept, mesure, entity=None, normalize_axis=1, aggfunc='count', freq='M', unstack_level=0):
+    def __init__(
+        self,
+        concept,
+        mesure,
+        entity=None,
+        normalize_axis=1,
+        aggfunc='count',
+        freq='M',
+        unstack_level=0
+        ):
         
-        self.time = 'creation_dt' # fig_gen allow for dynamic time var_nm but transformer does not yet
-        self.mesure = mesure
-        self.entity = entity
+        self._time = 'creation_dt' # fig_gen allow for dynamic time var_nm but transformer does not yet
 
         self.fig = CONCEPT_TO_FIG[concept]
         self.fig_arg_struct =  CONCEPT_TO_FIG_ARG_STRUCT[concept]
@@ -139,7 +168,7 @@ class FigGenerator(Transformer):
             if v[0] == '$':
                 fig_arg[k] = v[1:]
             else:
-                fig_arg[k] = getattr(self, v)
+                fig_arg[k] = getattr(self, '_%s' % v)
 
         return fig_arg
 
