@@ -2,22 +2,22 @@ from os.path import join
 
 from yaml import load, FullLoader
 
-from pandas import read_parquet, to_datetime, Series, DataFrame, concat
+from pandas import read_parquet, to_datetime, DataFrame, concat
 
 VAR_NM_TO_REF_TYPE = {
     'id':'string',
     'creation_dt':'datetime69[ns]',
     'msg':'string',
-    'author_nm':'category',
+    'author_nm':'string',
     'file_nm':'string',
     'n_code_lines_inserted':'uint32',
     'n_code_lines_deleted':'uint32',
     'commit_id':'string',
-    'ext':'category',
+    'ext':'string',
     'is_src':'bool',
     'is_test':'bool',
-    'module_nm':'category',
-    'component_nm':'category'
+    'module_nm':'string',
+    'component_nm':'string'
 }
 
 DATA_PATH = './data'
