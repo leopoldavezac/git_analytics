@@ -107,10 +107,4 @@ class GitLogParser():
             return self.files
 
 
-if __name__ == '__main__':
-    git_log_parser = GitLogParser("../eiffage_eclink_audit/code_review/ovidentia")
-    git_log_parser.get_commits_files_info()
-    
-
-
     
