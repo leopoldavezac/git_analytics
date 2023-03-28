@@ -1,4 +1,6 @@
-from email.mime import application
+from ast import arg
+from operator import mod
+from numpy import zeros
 import pandas as pd
 
 from flask import Flask
@@ -9,115 +11,233 @@ from utilities import read, load_config
 from fig_generation import FigGenerator
 
 CONFIG_FILE_NM = 'figs'
-
-MIN_PROP_OF_TOP_TO_BE = 0.01
+MIN_PROP_OF_TOP_TO_BE = 0.1
+INPUT_PERSISTENCE_LOCATION = False
 
 
 class WebApp:
 
+    ENTITY_INPUT_NMS = ["module_nm", "component_nm", "author_nm", "ext"]
+
     def __init__(self, config) -> None:
 
         self.config = config
+        self.df_base = read('commits_files')
 
-        self.df_commits_base = read('commits')
-        self.df_commits_files_base = read('commits_files')
-
-        print(__name__)
         server = Flask(__name__)
         self.app = Dash(__name__, server=server)
 
-    def get_commit_id(self, df_commits):
+        self.set_initial_selection()
 
-        return df_commits.id.values
+    def set_initial_selection(self):
+        
+        self.selection = {
+            entity_nm:{"value":None, "filter":self.get_base_filter(), "focus":False}
+            for entity_nm in self.ENTITY_INPUT_NMS+["period"]
+            }
+        
+    def get_base_filter(self):
+
+        base_filter = zeros((len(self.df_base), ), dtype="bool")
+        base_filter[:] = True
+
+        return base_filter
+
+    def get_key_labels(self, entity_nm, df=None):
+
+        if df is None:
+            df = self.df_base
+
+        key_labels = (
+            df
+            .groupby(entity_nm)
+            .n_code_lines_inserted
+            .sum()
+            .sort_values(ascending=False)
+            .pipe(lambda srx: (
+                srx
+                .loc[srx > MIN_PROP_OF_TOP_TO_BE*srx.iloc[0]]
+                .index
+                .tolist()
+            ))
+        )
+
+        return key_labels
 
     def get_period_slider(self):
 
-        start = self.df_commits_base.index.min()
-        end = self.df_commits_base.index.max()
-
+        start = self.df_base.index.min()
+        end = self.df_base.index.max()
         intervals = pd.date_range(start, end, freq='M')
         self.intervals = [
             "%s-%d" % (month, year)
             for month, year in zip(intervals.strftime('%b'), intervals.year)
         ][::4]
+        n_intervals = len(self.intervals)-1
+
+        self.selection["period"]["value"] = [0, n_intervals]
 
         return dcc.RangeSlider(
             0,
-            len(self.intervals)-1,
+            n_intervals-1,
             step=None,
             marks={i:dt for i,dt in enumerate(self.intervals)},
             allowCross=False,
             id='period_slider',
-            value=[0, len(self.intervals)-1]
+            value=self.selection["period"]["value"],
+            persistence=INPUT_PERSISTENCE_LOCATION
+        )
+
+    def get_entity_selection_dropdown(self, entity_nm):
+
+        labels = self.df_base[entity_nm].unique().tolist()
+        key_labels = self.get_key_labels(entity_nm)
+        self.selection[entity_nm]['value'] = key_labels
+        self.selection[entity_nm]['focus'] = True
+        self.update_filter(entity_nm, key_labels)
+
+        return dcc.Dropdown(
+            id='%s_selection' % entity_nm,
+            options=labels,
+            value=key_labels,
+            multi=True,
+            persistence=INPUT_PERSISTENCE_LOCATION
         )
 
     def set_layout(self):
 
+        entity_selection_dropdown = [
+            self.get_entity_selection_dropdown(entity_nm)
+            for entity_nm in self.ENTITY_INPUT_NMS
+        ]
+
         self.app.layout = html.Div(
         children=[
             html.Div(id='slider_div', children=self.get_period_slider()),
+            *entity_selection_dropdown,
             html.Div(id='figs') 
             ]
         )
 
-    def get_figs(self, df_commits, df_commits_files):
-
-        source_data_nm_to_df = {
-            'commits':df_commits,
-            'commits_files':df_commits_files
-        }
+    def get_figs(self, df):
 
         figs = []
 
         for _, fig_config in self.config.items():
 
             fig_gen = FigGenerator(**fig_config['fig_gen_arg'])
-            fig = fig_gen.get_fig(source_data_nm_to_df[fig_config['source_df_nm']])
+            fig = fig_gen.get_fig(df)
             figs.append(dcc.Graph(figure=fig))
 
         return figs
 
-    def filter_on_period(self, df, start_index, end_index):
+    def get_fired_input(self, *args):
 
-        start = self.intervals[start_index]
-        end = self.intervals[end_index]
+        for input_nm, input_val in zip(self.ENTITY_INPUT_NMS+['period'], args):
+            if input_val != self.selection[input_nm]["value"]:
+                return (input_nm, input_val)
 
-        return df.loc[(df.index > start) & (df.index<end)]
+    def update_selection(self, input_nm, input_val):
+        self.selection[input_nm]["value"] = input_val
 
-    def focus_on_key(self, entity_nm, df):
+    def get_period_as_date(self, period):
 
-        entity_vol = df.groupby(entity_nm).n_code_lines_inserted.sum().sort_values(ascending=False)
-        top_entity_vol = entity_vol.iloc[0]
+        start = self.intervals[period[0]]
+        end = self.intervals[period[1]]
 
-        key_entity_nms = entity_vol[entity_vol > MIN_PROP_OF_TOP_TO_BE*top_entity_vol].index.tolist()
-        df = df.loc[df[entity_nm].isin(key_entity_nms)]
-        df[entity_nm] = df[entity_nm].cat.set_categories(key_entity_nms)
+        return [start, end]
 
-        return df
+    def update_filter(self, input_nm, input_val):
+
+        if input_nm == "period":
+            period = self.get_period_as_date(input_val)
+            self.selection[input_nm]["filter"] = (
+                (self.df_base.index >= period[0])
+                & (self.df_base.index >= period[1])
+            )
+        else:
+            self.selection[input_nm]["filter"] = self.df_base[input_nm].isin(input_val)
+
+    def get_selection_df(self):
+
+        selection_filter = self.get_base_filter()
+        for selection in self.selection.values():
+            selection_filter = selection_filter & selection["filter"]
+
+        return self.df_base.loc[selection_filter]
+
+    def get_input_val(self):
+        return [
+            v["value"]
+            for k, v in self.selection.items()
+            if k != "period"
+            ]
+
+    def focus_on_key_element(self, df):
+
+        for entity_nm in self.ENTITY_INPUT_NMS:
+            if self.selection[entity_nm]['focus'] == False:
+                key_labels = self.get_key_labels(entity_nm, df)
+                self.update_selection(entity_nm, key_labels)
+                self.update_filter(entity_nm, key_labels)
+
+        return self.get_selection_df()
+
+    def reset_focus_state(self):
+        
+        for entity_nm in self.ENTITY_INPUT_NMS:
+            self.selection[entity_nm]['focus'] = False
+
+    def update_is_an_add(self, entity_nm, new_selection):
+
+        current_selection = self.selection[entity_nm]['value']
+        if len(new_selection) > len(current_selection):
+            return True
+
+        return False
+
 
     def set_callback(self):
 
+        entity_inputs = [
+            Input('%s_selection' % entity_nm, 'value')
+            for entity_nm in self.ENTITY_INPUT_NMS
+        ]
+
+        entity_outputs = [
+            Output('%s_selection' % entity_nm, 'value')
+            for entity_nm in self.ENTITY_INPUT_NMS
+        ]
+
         @self.app.callback(
-            Output('figs', 'children'),
-            [Input('period_slider', 'value')])
-        def get_figs_on_period(interval_index):
+            [
+                Output('figs', 'children'),
+                *entity_outputs
+            ],
+            [
+                *entity_inputs,
+                Input('period_slider', 'value')
+            ]
+        )
+        def gen_figs_based_on_input(*args):
 
-            dfs = {}
+            element_added = False #assume not by default and update otherwise
+            fired_input = self.get_fired_input(*args)
+
+            if fired_input is not None:
+                element_added = self.update_is_an_add(*fired_input)
+                self.update_selection(*fired_input)
+                self.reset_focus_state()
+                self.update_filter(*fired_input) 
             
-            for nm, df in zip(['df_commits', 'df_commits_files'], [self.df_commits_base, self.df_commits_files_base]):
-                
-                df = df.copy(deep=True)
-                df = self.filter_on_period(df, *interval_index)
-                df = self.focus_on_key('author_nm', df)
+            df = self.get_selection_df() 
+            
+            if not element_added:
+                df = self.focus_on_key_element(df)
 
-                if nm == 'df_commits_files':
-                    df = self.focus_on_key('module_nm', df)
-
-                dfs[nm] = df
-
-            figs = self.get_figs(**dfs)
-
-            return figs
+            figs = self.get_figs(df)
+            input_val = self.get_input_val()
+            return figs, *input_val
         
     def run_server(self):
 
@@ -130,3 +250,5 @@ if __name__ == '__main__':
     web_app.set_layout()
     web_app.set_callback()
     web_app.run_server()
+
+
