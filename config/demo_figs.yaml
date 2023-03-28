@@ -1,0 +1,10 @@
+Team Stability:
+  fig_gen_arg : 
+    concept : stability
+    freq : M
+    entity : author_nm
+    mesure : id
+    aggfunc : nunique
+    normalize_axis : 0
+    unstack_level : 0
+  source_df_nm : commits

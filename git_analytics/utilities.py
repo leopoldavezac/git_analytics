@@ -85,7 +85,7 @@ def save_as_parquet(df, file_nm):
 def read(file_nm):
 
     file_path = join(DATA_PATH, '%s.parquet' % file_nm)
-    df = read_parquet(file_path, engine='pyarrow', version="2.4")
+    df = read_parquet(file_path, engine='pyarrow')
     return df.set_index('creation_dt')
 
 
