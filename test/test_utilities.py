@@ -1,9 +1,9 @@
 
 
-from pandas import DataFrame
-from pandas.testing import assert_frame_equal
+from pandas import DataFrame, Series
+from pandas.testing import assert_frame_equal, assert_series_equal
 
-from git_analytics.utilities import handle_file_renaming
+from git_analytics.utilities import handle_file_renaming, AuthorNameGrouper
 
 import pytest
 
@@ -96,3 +96,15 @@ def test_handle_file_renaming(input_df, expected_df):
 
     obtained_df = handle_file_renaming(input_df)
     assert_frame_equal(obtained_df, expected_df)
+
+
+def test_author_nm_grouping():
+
+    INPUT_AUTHOR_NMS = Series(['Bob Lebricolo', 'bob lebricolo', 'b.lebricolo', 'b.lebricolo@work.com'])
+    EXPECTED_AUTHOR_NMS = Series(['bob lebricolo', 'bob lebricolo', 'bob lebricolo', 'bob lebricolo'])
+
+    author_nm_grouper = AuthorNameGrouper()
+    author_nm_grouper.fit(INPUT_AUTHOR_NMS)
+    obtained_author_nms = author_nm_grouper.transform(INPUT_AUTHOR_NMS)
+
+    assert_series_equal(EXPECTED_AUTHOR_NMS, obtained_author_nms, check_names=False)

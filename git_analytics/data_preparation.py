@@ -8,6 +8,7 @@ from git_analytics.utilities import (
     save_as_parquet,
     handle_file_renaming,
     get_n_code_lines_only,
+    AuthorNameGrouper
 )
 
 def main():
@@ -17,14 +18,17 @@ def main():
     git_log_parser = GitLogParser(config['path'])
     df_commits = git_log_parser.get_commits_info()
     df_commits_files = git_log_parser.get_commits_files_info()
-    
+
+    author_nm_grouper = AuthorNameGrouper()
+    author_nm_grouper.fit(df_commits.author_nm)
+    df_commits['author_nm'] = author_nm_grouper.transform(df_commits.author_nm)    
     df_commits_files = handle_file_renaming(df_commits_files)
 
     commits_files_tagger = CommitFilesTagger(df_commits_files, config['repo_struct'])
     df_commits_files = commits_files_tagger.get_tagged_files()
 
-    df_commits_files = get_n_code_lines_only(df_commits_files)
-    
+    df_commits_files = get_n_code_lines_only(df_commits_files)    
+
     df_commits = add_agg_column_on_id(
         df_commits,
         df_commits_files,

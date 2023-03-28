@@ -36,7 +36,7 @@ def test_data_preparation(mocker): #integration_test
                     ['a2140d0462144ab0e58ee801a50b555fafde7a1f', '2021-09-29 15:56:31 +0200', 'leopoldavezac','feat(reward) - return (or not) reward to user', 35],
                     ['da89518e033844b5d1d7947fc9a407257f3c6184', '2021-09-29 15:35:08 +0200', 'leopoldavezac','refactoring(app) - renaming variables', 3],
                     ['4cc0ae168567f860bb58a1ac5d985e59d2ece5bd', '2021-09-29 14:23:08 +0200', 'leopoldavezac','feat(app) - return input msg as is', 20],
-                    ['f44310f347a0144523c0393ab3fa217a907819d4', '2021-09-30 15:14:23 +0200', "Leopold d'Avezac",'Initial commit', 0],
+                    ['f44310f347a0144523c0393ab3fa217a907819d4', '2021-09-30 15:14:23 +0200', "leopold d'avezac",'Initial commit', 0],
                 ],
                 columns=['id', 'creation_dt', 'author_nm', 'msg', 'n_code_lines_inserted']
         )
@@ -64,8 +64,8 @@ def test_data_preparation(mocker): #integration_test
                     ['a2140d0462144ab0e58ee801a50b555fafde7a1f', '2021-09-29 15:56:31 +0200', 'leopoldavezac','rewards.yaml', 0, 0, 'other', False, nan],
                     ['da89518e033844b5d1d7947fc9a407257f3c6184', '2021-09-29 15:35:08 +0200', 'leopoldavezac','random_reward_bot/app.py', 3, 3, 'py', True, 'app'],
                     ['4cc0ae168567f860bb58a1ac5d985e59d2ece5bd', '2021-09-29 14:23:08 +0200', 'leopoldavezac','random_reward_bot/app.py', 20, 0, 'py', True, 'app'],
-                    ['f44310f347a0144523c0393ab3fa217a907819d4', '2021-09-30 15:14:23 +0200', "Leopold d'Avezac",'LICENSE', 0, 0, 'other', False, nan],
-                    ['f44310f347a0144523c0393ab3fa217a907819d4', '2021-09-30 15:14:23 +0200', "Leopold d'Avezac",'README.md', 0, 0, 'other', False, nan],
+                    ['f44310f347a0144523c0393ab3fa217a907819d4', '2021-09-30 15:14:23 +0200', "leopold d'avezac",'LICENSE', 0, 0, 'other', False, nan],
+                    ['f44310f347a0144523c0393ab3fa217a907819d4', '2021-09-30 15:14:23 +0200', "leopold d'avezac",'README.md', 0, 0, 'other', False, nan],
                 ],
                 columns = ['commit_id', 'creation_dt', 'author_nm', 'file_nm', 'n_code_lines_inserted', 'n_code_lines_deleted', 'ext', 'is_src', 'module_nm']
         )

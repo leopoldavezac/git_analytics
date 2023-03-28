@@ -2,7 +2,7 @@ from os.path import join
 
 from yaml import load, FullLoader
 
-from pandas import read_parquet, to_datetime
+from pandas import read_parquet, to_datetime, Series, DataFrame, concat
 
 VAR_NM_TO_REF_TYPE = {
     'id':'string',
@@ -168,3 +168,54 @@ def get_n_code_lines_only(df_commits_files):
         df_commits_files.drop(columns=n_all_lines_action_nm, inplace=True)
 
     return df_commits_files
+
+class AuthorNameGrouper:
+
+    # H: there always the fnm lnm format and is represented for all the authors
+
+    _REGEX_BASE_FORMAT = '([a-z\-]*) ([a-z\-]*)'
+    _SUPPORTED_FORMATS = ['fnm lnm', 'fnm[0].lnm', 'fnm', 'fnm[0].lnm@domain.ext', 'fnm.lnm@domain.ext']
+
+    def __init__(self) -> None:
+        pass
+
+    def remove_email_domain_ext(self, nms):
+
+        return nms.str.split('@', expand=True).iloc[:,0]
+
+    def fit(self, author_nms):
+
+        author_nms = author_nms.str.lower()
+        author_nms = self.remove_email_domain_ext(author_nms)
+
+        unique_author_nms = (
+                author_nms.str.extract(self._REGEX_BASE_FORMAT)
+                .set_axis(['fnm', 'lnm'], axis=1)
+        )
+
+        unique_author_nms['fnm lnm'] = unique_author_nms.fnm + ' ' + unique_author_nms.lnm
+        unique_author_nms['fnm[0].lnm'] = unique_author_nms.fnm.str.slice(0,1) + '.' + unique_author_nms.lnm
+        unique_author_nms['fnm'] = unique_author_nms.fnm
+        unique_author_nms['fnm.lnm'] = unique_author_nms.fnm + '.' + unique_author_nms.lnm
+
+        author_nm_mapper = DataFrame()
+
+        for nm_format in ['fnm[0].lnm', 'fnm', 'fnm.lnm']:
+            author_nm_mapper = concat([
+                (
+                    unique_author_nms[['fnm lnm', nm_format]]
+                    .set_axis(['target', 'source'], axis=1)
+                ),
+                author_nm_mapper
+                ])
+
+        self.mapper = {}
+        for _, val in author_nm_mapper.iterrows():
+            self.mapper[val['source']] = val['target']
+
+    def transform(self, author_nms):
+
+        author_nms = author_nms.str.lower()
+        author_nms = self.remove_email_domain_ext(author_nms)
+
+        return author_nms.replace(self.mapper)
