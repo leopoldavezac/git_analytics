@@ -294,31 +294,12 @@ class Dashboard:
 
             return fig_space, *input_val
         
-        
-        # @self.app.callback(
-        #     Output('figs', 'children'),
-        #     [*view_inputs],
-        #     prevent_initial_call=True
-        # )
-        # def gen_figs_based_on_input(*args):
-
-        #     view_state = args
-        #     for nm, state_nclicks, memory_ncliks in zip(VIEW_NMS, view_state, self.view_memory): 
-        #         if state_nclicks != memory_ncliks:
-        #             self.view_nm = nm
-
-        #     figs = self.get_figs(self.df_base)
-
-        #     return html.Div(figs)  
-
-
 
     def get_app_server(self):
 
         return self.app.server
         
     def run_server(self):
-        #host="0.0.0.0", port="8050"
         self.app.run(debug=True)
 
 

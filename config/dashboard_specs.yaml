@@ -1,0 +1,203 @@
+# Team Stability:
+#   stat_def: 
+#     concept: stability
+#     freq: M
+#     entity: author_nm
+#     mesure: n_code_lines_inserted
+#     aggfunc: sum
+#     normalize_axis: 1
+#     unstack_level: 0
+#   source_df_nm: commits_files
+
+# Module Stability:
+#   stat_def: 
+#     concept: stability
+#     freq: M
+#     entity: module_nm
+#     mesure: n_code_lines_inserted
+#     aggfunc: sum
+#     normalize_axis: 1
+#     unstack_level: 0
+#   source_df_nm: commits_files
+
+# # Component Stability:
+# #   stat_def: 
+# #     concept: stability
+# #     freq: M
+# #     entity: component_nm
+# #     mesure: n_code_lines_inserted
+# #     aggfunc: sum
+# #     normalize_axis: 1
+# #     unstack_level: 0
+# #   source_df_nm: commits_files
+
+# Team Evolution:
+#   stat_def: 
+#     concept: evolution
+#     freq: M
+#     mesure: author_nm
+#     aggfunc: nunique
+#   source_df_nm: commits_files
+
+# Activity Evolution:
+#   stat_def: 
+#     concept: evolution
+#     freq: M
+#     mesure: n_code_lines_inserted
+#     aggfunc: sum
+#   source_df_nm: commits_files
+
+# Module Size:
+#   stat_def: 
+#     concept: size
+#     entity: module_nm
+#     mesure: n_code_lines_inserted
+#     aggfunc: sum
+#   source_df_nm: commits_files
+
+knowledge_perenity:
+  layout: [
+    [component_specialization],
+    [module_specialization],
+    [lang_specialization]
+  ]
+
+  stats:
+    component_specialization:
+      nm: 'component specialization'
+      def:
+        concept: specialization
+        entity: ['author_nm', 'component_nm']
+        mesure: n_code_lines_inserted
+        aggfunc: sum
+        normalize_axis: 1
+        unstack_level: 0
+      source_df_nm: commits_files
+
+    module_specialization:
+      nm: 'module specialization'
+      def:
+        concept: specialization
+        entity: ['author_nm', 'module_nm']
+        mesure: n_code_lines_inserted
+        aggfunc: sum
+        normalize_axis: 1
+        unstack_level: 0
+      source_df_nm: commits_files
+
+    lang_specialization:
+      nm: 'lang specialization'
+      def:
+        concept: specialization
+        entity: ['author_nm', 'ext']
+        mesure: n_code_lines_inserted
+        aggfunc: sum
+        normalize_axis: 1
+        unstack_level: 0
+      source_df_nm: commits_files
+
+
+
+coding_activity:
+  layout: [
+    [activity_evolution],
+    [module_stability],
+    [component_stability],
+  ]  
+
+  stats:
+    activity_evolution:
+      nm: 'activity evolution'
+      def:
+        concept: evolution
+        freq: M
+        mesure: n_code_lines_inserted
+        aggfunc: sum
+      source_df_nm: commits_files
+
+    module_stability:
+      nm: 'module stability'
+      def:
+        concept: stability
+        freq: M
+        mesure: n_code_lines_inserted
+        entity: module_nm
+        aggfunc: sum
+        normalize_axis: 1
+        unstack_level: 0
+        aggfunc: sum
+      source_df_nm: commits_files
+
+    component_stability:
+      nm: 'component stability'
+      def:
+        concept: stability
+        freq: M
+        mesure: n_code_lines_inserted
+        entity: component_nm
+        aggfunc: sum
+        normalize_axis: 1
+        unstack_level: 0
+        aggfunc: sum
+      source_df_nm: commits_files
+
+
+overview:
+  layout: [
+    [component_size, module_size],
+    [lang_repartition, dev_activity]
+  ]  
+
+  stats:
+    component_size:
+      nm: 'component size'
+      def:
+        concept: size
+        entity: component_nm
+        mesure: n_code_lines_inserted
+        aggfunc: sum
+      source_df_nm: commits_files
+
+    lang_repartition:
+      nm: 'language repartition'
+      def:
+        concept: repartition
+        entity: ext
+        mesure: n_code_lines_inserted
+        aggfunc: sum
+      source_df_nm: commits_files
+
+    module_size:
+      nm: 'module size'
+      def:
+        concept: size
+        entity: module_nm
+        mesure: n_code_lines_inserted
+        aggfunc: sum
+      source_df_nm: commits_files
+
+    dev_activity:
+      nm: 'developper activity'
+      def:
+        concept: size
+        entity: author_nm
+        mesure: n_code_lines_inserted
+        aggfunc: sum
+      source_df_nm: commits_files
+
+
+# Team Specialization:
+#   stat_def: 
+#     concept: specialization
+#     entity: ['author_nm', 'module_nm']
+#     mesure: n_code_lines_inserted
+#     aggfunc: sum
+#     normalize_axis: 1
+#     unstack_level: 0
+#   source_df_nm: commits_files
+
+
+# default_stats -> page definition : stats & layout
+# stats def must have nm & id
+# stats layout must be created on set layout
+# callback must output in all figs in correct order

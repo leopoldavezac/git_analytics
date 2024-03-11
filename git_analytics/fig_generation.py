@@ -191,6 +191,7 @@ class FigGenerator(Transformer):
             if len(fig_arg) == 0:
                 n_ticks = df.shape[axis_nm == 'x']
             else:
+                print(fig_arg)
                 var_nm = fig_arg[axis_nm]
                 n_ticks = df[var_nm].nunique()
 
@@ -206,8 +207,10 @@ class FigGenerator(Transformer):
         df = self.get_transformed(df)        
         fig_arg = self.__get_fig_arg()
 
-        fig = self.fig(df, **fig_arg)
-
+        if self._concept in ['specialization', 'stability']:        
+            fig = self.fig(df, **fig_arg, aspect='auto')
+        else:
+            fig = self.fig(df, **fig_arg)
         layout_arg = self.__get_layout_arg(df, fig_arg)
         layout_arg.update(self.base_layout)
         fig.update_layout(layout_arg)
