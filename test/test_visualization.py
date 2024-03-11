@@ -1,7 +1,7 @@
 
 import os
 
-from git_analytics.analysis import analyze
+from git_analytics.visualization import visualize
 from git_analytics.config_management import ConfigManager
 
 import git_analytics.utilities
@@ -9,7 +9,7 @@ import git_analytics.cmd_chaining
 import git_analytics.git_log_parsing
 
 
-def test_analyze(mocker):
+def test_visualize(mocker):
 
     def run_server_mock(self):
         pass
@@ -48,13 +48,13 @@ def test_analyze(mocker):
         )
 
     mocker.patch(
-        'git_analytics.analysis.WebApp.run_server',
+        'git_analytics.analysis.Dashboard.run_server',
         run_server_mock
     )
 
     os.system('unzip test/asset/repo.zip') #test repo is stored as zip to avoid maintaning two git repo
 
-    analyze(config_manager)
+    visualize(config_manager)
 
     obtained_output_nms = os.listdir('./test/temp/data').sort()
 

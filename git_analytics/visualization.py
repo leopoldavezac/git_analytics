@@ -3,29 +3,36 @@ import pandas as pd
 
 from flask import Flask
 
-from dash import Dash, html, dcc, Output, Input
+from dash import Dash, html, dcc, Output, Input, callback_context
+from dash_bootstrap_components import Container, Col, Row
+from dash_bootstrap_components.themes import BOOTSTRAP
 
 from git_analytics.utilities import read
 from git_analytics.cmd_chaining import run_predessor_if_needed
 from git_analytics.fig_generation import FigGenerator
 from git_analytics.config_management import ConfigManager
 
-CMD_NM = 'analyze'
+CMD_NM = 'visualize'
 
 MIN_PROP_OF_TOP_TO_BE = 0.1
 INPUT_PERSISTENCE_LOCATION = False
 
-class WebApp:
+VIEW_NMS = ['overview', 'coding_activity', 'knowledge_perenity']
+
+class Dashboard:
 
     ENTITY_INPUT_NMS = ["module_nm", "component_nm", "author_nm", "ext"]
 
-    def __init__(self, stats:dict, codebase_nm:str) -> None:
+    def __init__(self, specs:dict, codebase_nm:str) -> None:
 
-        self.stats = stats
+        self.specs = specs
         self.codebase_nm = codebase_nm
         self.df_base = read(codebase_nm, 'commits_files')
 
-        self.app = Dash(__name__)
+        self.view_nm = 'overview'
+        self.view_memory = [0, 0, 0]
+
+        self.app = Dash(__name__, external_stylesheets=[BOOTSTRAP])
 
         self.set_initial_selection()
 
@@ -103,39 +110,57 @@ class WebApp:
             multi=True,
             persistence=INPUT_PERSISTENCE_LOCATION
         )
+    
+    def get_fig_space_layout(self, figs):
 
-    def set_layout(self):
+        rows = []
+
+        for row_stat_ids in self.specs[self.view_nm]['layout']:
+            rows.append(
+                Row(children=[Col(id=col_stat_id, children=figs.pop()) for col_stat_id in row_stat_ids])
+            )
+
+        return Container(children=rows)
+
+
+    def set_initial_layout(self):
 
         entity_selection_dropdown = [
             self.get_entity_selection_dropdown(entity_nm)
             for entity_nm in self.ENTITY_INPUT_NMS
         ]
 
-        self.app.layout = html.Div(
+        df = self.focus_on_key_element(self.df_base)
+        figs = self.get_figs(df) 
+        fig_space = self.get_fig_space_layout(figs)
+
+        self.app.layout = Container(
         children=[
+            html.Div([
+                html.Div(
+                    html.Button(nm, id='%s_view' % nm, n_clicks=0)
+                ) for nm in VIEW_NMS
+            ]),
             html.Div(id='slider_div', children=self.get_period_slider()),
             *entity_selection_dropdown,
-            html.Div(id='figs') 
+            html.Div(id='figs', children=fig_space) 
             ]
         )
 
-    def get_figs(self, df):
+    def get_figs(self, df=None):
+
+        if df is None:
+            df = self.df_base
 
         figs = []
 
-        for _, stat_config in self.stats.items():
+        for id, stat in self.specs[self.view_nm]['stats'].items():
 
-            fig_gen = FigGenerator(**stat_config['fig_gen_arg'])
+            fig_gen = FigGenerator(**stat['def'])
             fig = fig_gen.get_fig(df)
             figs.append(dcc.Graph(figure=fig))
 
         return figs
-
-    def get_fired_input(self, *args):
-
-        for input_nm, input_val in zip(self.ENTITY_INPUT_NMS+['period'], args):
-            if input_val != self.selection[input_nm]["value"]:
-                return (input_nm, input_val)
 
     def update_selection(self, input_nm, input_val):
         self.selection[input_nm]["value"] = input_val
@@ -175,6 +200,8 @@ class WebApp:
 
     def focus_on_key_element(self, df):
 
+        df = df.copy(deep=True)
+
         for entity_nm in self.ENTITY_INPUT_NMS:
             if self.selection[entity_nm]['focus'] == False:
                 key_labels = self.get_key_labels(entity_nm, df)
@@ -204,6 +231,11 @@ class WebApp:
             for entity_nm in self.ENTITY_INPUT_NMS
         ]
 
+        view_inputs = [
+            Input('%s_view' % nm, 'n_clicks')
+            for nm in VIEW_NMS
+        ]
+
         entity_outputs = [
             Output('%s_selection' % entity_nm, 'value')
             for entity_nm in self.ENTITY_INPUT_NMS
@@ -216,19 +248,39 @@ class WebApp:
             ],
             [
                 *entity_inputs,
+                *view_inputs,
                 Input('period_slider', 'value')
-            ]
+            ],
+            prevent_initial_call=True
         )
         def gen_figs_based_on_input(*args):
 
-            element_added = False #assume not by default and update otherwise
-            fired_input = self.get_fired_input(*args)
+            triggered_id = callback_context.triggered_id
+            new_values = [
+                input_val['value']
+                for input_val in callback_context.args_grouping
+                if input_val['triggered']
+            ][0]
 
-            if fired_input is not None:
-                element_added = self.update_is_an_add(*fired_input)
-                self.update_selection(*fired_input)
-                self.reset_focus_state()
-                self.update_filter(*fired_input) 
+            if triggered_id[-4:] == 'view':
+
+                self.view_nm = triggered_id[:-5]
+                df = self.focus_on_key_element(self.df_base)
+                figs = self.get_figs(df) 
+                fig_space = self.get_fig_space_layout(figs)
+
+                input_val = self.get_input_val()
+
+                return fig_space, *input_val
+
+            entity_nm = triggered_id[:-10]
+
+            element_added = False #assume not by default and update otherwise
+        
+            element_added = self.update_is_an_add(entity_nm, new_values)
+            self.update_selection(entity_nm, new_values)
+            self.reset_focus_state()
+            self.update_filter(entity_nm, new_values) 
             
             df = self.get_selection_df() 
             
@@ -237,22 +289,44 @@ class WebApp:
 
             figs = self.get_figs(df)
             input_val = self.get_input_val()
-            return figs, *input_val
+
+            fig_space = self.get_fig_space_layout(figs)
+
+            return fig_space, *input_val
+        
+        
+        # @self.app.callback(
+        #     Output('figs', 'children'),
+        #     [*view_inputs],
+        #     prevent_initial_call=True
+        # )
+        # def gen_figs_based_on_input(*args):
+
+        #     view_state = args
+        #     for nm, state_nclicks, memory_ncliks in zip(VIEW_NMS, view_state, self.view_memory): 
+        #         if state_nclicks != memory_ncliks:
+        #             self.view_nm = nm
+
+        #     figs = self.get_figs(self.df_base)
+
+        #     return html.Div(figs)  
+
+
 
     def get_app_server(self):
 
         return self.app.server
         
     def run_server(self):
-
+        #host="0.0.0.0", port="8050"
         self.app.run(debug=True)
 
 
-def analyze(config_manager:ConfigManager) -> WebApp:
+def visualize(config_manager:ConfigManager) -> Dashboard:
 
     run_predessor_if_needed(CMD_NM, config_manager)
-    web_app = WebApp(config_manager['stats'], config_manager['codebase_nm'])
-    web_app.set_layout()
+    web_app = Dashboard(config_manager['dashboard_specs'], config_manager['codebase_nm'])
+    web_app.set_initial_layout()
     web_app.set_callback()
 
     return web_app

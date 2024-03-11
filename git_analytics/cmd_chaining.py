@@ -5,7 +5,7 @@ from git_analytics.config_management import ConfigManager
 DATA_PATH = './data'
 
 CMD_NM_TO_PRECURSOR_CMD_NM = {
-    'analyze':'prep_data',
+    'visualize':'prep_data',
     'prep_data':'parse_git'
 }
 

@@ -11,7 +11,7 @@ pip install -e .
 
 ## Execution
 
-Run one of the following command with the required arguments : **parse_git**, **prep_data**, **analyze**. To know more on the different command just run 
+Run one of the following command with the required arguments : **parse_git**, **prep_data**, **visualize**. To know more on the different command just run 
 
 ```
 <command> -h

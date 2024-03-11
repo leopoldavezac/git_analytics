@@ -16,7 +16,7 @@ class CLIArgumentParser:
     _CMD_NM_TO_DESC = {
         'parse_git':'parse the git log of a codebase into a tabular format.',
         'prep_data':'clean, format & enrich parsed log.',
-        'analyze':'parse the git log of a codebase into a tabular format'
+        'visualize':'parse the git log of a codebase into a tabular format'
     }
 
     _ARGS_SPEC = {
@@ -26,7 +26,7 @@ class CLIArgumentParser:
             'help':'identifier for the the codebase for which you wanna parse the git',
             'flags':[], #no flags -> arg is always required
             'arg_type_to_cmds':{
-                'required':['parse_git', 'prep_data', 'analyze'],
+                'required':['parse_git', 'prep_data', 'visualize'],
                 'option':[]
             },
         },
@@ -37,7 +37,7 @@ class CLIArgumentParser:
             'flags':['--path_to_repo', '-pr'],
             'arg_type_to_cmds':{
                 'required':['parse_git'],
-                'option':['analyze']
+                'option':['visualize']
             },
         },
         'src_path':{
@@ -47,7 +47,7 @@ class CLIArgumentParser:
             'flags':['--src_path', '-sp'],
             'arg_type_to_cmds':{
                 'required':['prep_data'],
-                'option':['analyze']
+                'option':['visualize']
             },
         },
         'module_depth':{
@@ -57,7 +57,7 @@ class CLIArgumentParser:
             'flags':['--module_depth', '-md'],
             'arg_type_to_cmds':{
                 'required':['prep_data'],
-                'option':['analyze']
+                'option':['visualize']
             },
         },
         'component_nms':{
@@ -67,7 +67,7 @@ class CLIArgumentParser:
             'flags':['--component_nms', '-cn'],
             'arg_type_to_cmds':{
                 'required':[],
-                'option':['prep_data', 'analyze']
+                'option':['prep_data', 'visualize']
             },
         },
         'component_depth':{
@@ -77,7 +77,7 @@ class CLIArgumentParser:
             'flags':['--component_depth', '-cd'],
             'arg_type_to_cmds':{
                 'required':[],
-                'option':['prep_data', 'analyze']
+                'option':['prep_data', 'visualize']
             },
         },
         'custom_stats':{
@@ -87,7 +87,7 @@ class CLIArgumentParser:
             'flags':['--custom_stats', '-cs'],
             'arg_type_to_cmds':{
                 'required':[],
-                'option':['analyze']
+                'option':['visualize']
             },
         },
         'rerun':{
@@ -97,7 +97,7 @@ class CLIArgumentParser:
             'flags':['--rerun', '-r'],
             'arg_type_to_cmds':{
                 'required':[],
-                'option':['prep_data', 'analyze']
+                'option':['prep_data', 'visualize']
            },
         }
     }
@@ -130,7 +130,7 @@ class CLIArgumentParser:
 
     def parse_args(self) -> None:
 
-        if self.cmd_nm == 'analyze':
+        if self.cmd_nm == 'visualize':
             self.handle_debug_mode_args()
 
         self.args = self.parser.parse_args()
@@ -151,7 +151,7 @@ class ConfigManager(dict):
     _CMD_NM_TO_REQUIRED_PARAM_NMS = {
         'parse_git':['codebase_nm', 'path_to_repo'],
         'prep_data':['codebase_nm', 'src_path', 'module_depth'],
-        'analyze':['codebase_nm']
+        'visualize':['codebase_nm']
     }
 
     codebase_nm = None
@@ -183,13 +183,11 @@ class ConfigManager(dict):
         
         return True
 
-    def set_stats_template_from_file(self) -> None:
+    def set_dashboard_specs_from_config(self) -> None:
 
-        template_nm = 'default' if not self.custom_stats else self.codebase_nm
-
-        template_path = join('config', '%s_stats.yaml' % template_nm)
+        template_path = join('config', 'dashboard_specs.yaml')
         with open(template_path, 'r') as f:
-            self.stats = load(f, Loader=FullLoader)
+            self.dashboard_specs = load(f, Loader=FullLoader)
 
     def __getitem__(self, param_nm) -> Union[str, int]:
 
@@ -201,7 +199,7 @@ def instanciate_config_manager(cmd_nm:str) -> ConfigManager:
     cli_args = get_args_from_cli(cmd_nm)
     config_manager.set_config_with_cli_args(cli_args)
 
-    if cmd_nm == 'analyze':
-        config_manager.set_stats_template_from_file()
+    if cmd_nm == 'visualize':
+        config_manager.set_dashboard_specs_from_config()
 
     return config_manager
