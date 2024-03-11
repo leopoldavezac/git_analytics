@@ -191,7 +191,6 @@ class FigGenerator(Transformer):
             if len(fig_arg) == 0:
                 n_ticks = df.shape[axis_nm == 'x']
             else:
-                print(fig_arg)
                 var_nm = fig_arg[axis_nm]
                 n_ticks = df[var_nm].nunique()
 
