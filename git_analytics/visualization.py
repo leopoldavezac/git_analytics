@@ -175,9 +175,9 @@ class Dashboard:
 
         figs = []
 
-        for id, stat in self.specs[self.view_nm]['stats'].items():
+        for stat in self.specs[self.view_nm]['stats'].values():
 
-            fig_gen = FigGenerator(**stat['def'])
+            fig_gen = FigGenerator(title=stat['nm'], **stat['def'])
             fig = fig_gen.get_fig(df)
             figs.append(dcc.Graph(figure=fig))
 

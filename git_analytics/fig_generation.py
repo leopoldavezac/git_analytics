@@ -3,11 +3,11 @@ from plotly.express import imshow, line, bar, pie
 from copy import deepcopy
 
 CONCEPT_TO_FIG_ARG_STRUCT = {
-    'specialization':{},
-    'stability':{},
-    'evolution':{'x':'time', 'y':'mesure'},
-    'size':{'x':'mesure', 'y':'entity', 'orientation':'$h'},
-    'repartition':{'names':'entity', 'values':'mesure'}
+    'specialization':{'title':'title'},
+    'stability':{'title':'title'},
+    'evolution':{'x':'time', 'y':'mesure', 'title':'title'},
+    'size':{'x':'mesure', 'y':'entity', 'orientation':'$h', 'title':'title'},
+    'repartition':{'names':'entity', 'values':'mesure', 'title':'title'}
 }
 
 CONCEPT_TO_OPERATION_SUITE = {
@@ -47,7 +47,7 @@ CONCEPT_TO_FIG_CUSTOM_DIMS = {
     'specialization':[],
     'evolution':[],
     'repartition':[],
-    'size':['height']
+    'size':['height'],
 }
 
 DIM_NM_TO_AXIS_NM = {
@@ -62,6 +62,8 @@ CONCEPT_TO_BASE_LAYOUT = {
     'repartition':{},
     'size':{'yaxis':{'tickmode':'linear'}}
 }
+
+GENERIC_LAYOUT_ARG = {'template':'plotly_white', 'font':{'size':13}}
 
 class UnknownOperation(Exception):
     pass
@@ -142,6 +144,7 @@ class FigGenerator(Transformer):
         self,
         concept,
         mesure,
+        title='titile',
         entity=None,
         normalize_axis=1,
         aggfunc='count',
@@ -155,7 +158,11 @@ class FigGenerator(Transformer):
         self.fig_arg_struct =  CONCEPT_TO_FIG_ARG_STRUCT[concept]
 
         self.base_layout = CONCEPT_TO_BASE_LAYOUT[concept]
+        self.base_layout.update(GENERIC_LAYOUT_ARG)
+
         self.custom_dims = CONCEPT_TO_FIG_CUSTOM_DIMS[concept]
+
+        self._title = title
 
         Transformer.__init__(self, concept, mesure, entity, normalize_axis, aggfunc, freq, unstack_level)
 
@@ -172,9 +179,9 @@ class FigGenerator(Transformer):
 
         return fig_arg
 
-    def __get_dim_size(self, n_ticks, tick_font_size=12):
+    def __get_dim_size(self, n_ticks, tick_font_size=13):
 
-        COEF = 300
+        COEF = 400
         size = COEF * n_ticks / tick_font_size
 
         return size if size > 250 else 250
@@ -188,7 +195,7 @@ class FigGenerator(Transformer):
 
             axis_nm = DIM_NM_TO_AXIS_NM[dim_nm]
 
-            if len(fig_arg) == 0:
+            if len(fig_arg) == 1:
                 n_ticks = df.shape[axis_nm == 'x']
             else:
                 var_nm = fig_arg[axis_nm]
@@ -207,9 +214,9 @@ class FigGenerator(Transformer):
         fig_arg = self.__get_fig_arg()
 
         if self._concept in ['specialization', 'stability']:        
-            fig = self.fig(df, **fig_arg, aspect='auto')
+            fig = self.fig(df, **fig_arg, aspect='auto', zmax=1, zmin=0, color_continuous_scale='tealgrn')
         else:
-            fig = self.fig(df, **fig_arg)
+            fig = self.fig(df, **fig_arg, color_discrete_sequence=['skyblue'])
         layout_arg = self.__get_layout_arg(df, fig_arg)
         layout_arg.update(self.base_layout)
         fig.update_layout(layout_arg)

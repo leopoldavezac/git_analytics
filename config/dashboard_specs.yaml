@@ -7,7 +7,7 @@ knowledge_perenity:
 
   stats:
     component_specialization:
-      nm: 'component specialization'
+      nm: 'component specialization : prop of component coded by dev'
       def:
         concept: specialization
         entity: ['author_nm', 'component_nm']
@@ -18,7 +18,7 @@ knowledge_perenity:
       source_df_nm: commits_files
 
     module_specialization:
-      nm: 'module specialization'
+      nm: 'module specialization : prop of module coded by dev'
       def:
         concept: specialization
         entity: ['author_nm', 'module_nm']
@@ -29,7 +29,7 @@ knowledge_perenity:
       source_df_nm: commits_files
 
     lang_specialization:
-      nm: 'lang specialization'
+      nm: 'lang specialization : prop of lang coded by dev'
       def:
         concept: specialization
         entity: ['author_nm', 'ext']
@@ -59,7 +59,7 @@ coding_activity:
       source_df_nm: commits_files
 
     module_stability:
-      nm: 'module stability'
+      nm: 'module stability : prop of module coded by month'
       def:
         concept: stability
         freq: M
@@ -72,7 +72,7 @@ coding_activity:
       source_df_nm: commits_files
 
     component_stability:
-      nm: 'component stability'
+      nm: 'component stability : prop of component coded by month'
       def:
         concept: stability
         freq: M
