@@ -4,7 +4,7 @@ import pandas as pd
 from flask import Flask
 
 from dash import Dash, html, dcc, Output, Input, callback_context
-from dash_bootstrap_components import Container, Col, Row
+from dash_bootstrap_components import Container, Col, Row, Button, Offcanvas, Navbar
 from dash_bootstrap_components.themes import BOOTSTRAP
 
 from git_analytics.utilities import read
@@ -103,13 +103,17 @@ class Dashboard:
         self.selection[entity_nm]['focus'] = True
         self.update_filter(entity_nm, key_labels)
 
-        return dcc.Dropdown(
-            id='%s_selection' % entity_nm,
-            options=labels,
-            value=key_labels,
-            multi=True,
-            persistence=INPUT_PERSISTENCE_LOCATION
-        )
+        return  html.Div([
+            html.H5(entity_nm),
+            dcc.Dropdown(
+                id='%s_selection' % entity_nm,
+                options=labels,
+                value=key_labels,
+                multi=True,
+                persistence=INPUT_PERSISTENCE_LOCATION
+            ),
+            html.Br()
+        ])
     
     def get_fig_space_layout(self, figs):
 
@@ -134,16 +138,33 @@ class Dashboard:
         figs = self.get_figs(df) 
         fig_space = self.get_fig_space_layout(figs)
 
+        navbar = Navbar(
+            Container([Button(html.H5("Filter results"), id='filter_panel_button', color="light", style={'width': '50%', 'margin':'auto'}, n_clicks=0)]
+            ),
+            fixed='bottom', color="#FFFFFF"
+        )
+
+
         self.app.layout = Container(
         children=[
-            html.Div([
-                html.Div(
-                    html.Button(nm, id='%s_view' % nm, n_clicks=0)
-                ) for nm in VIEW_NMS
-            ]),
-            html.Div(id='slider_div', children=self.get_period_slider()),
-            *entity_selection_dropdown,
-            html.Div(id='figs', children=fig_space) 
+            html.H1('LibPerenity', style={'textAlign': 'center'}),
+            html.H3('Make sure your dependencies are reliable', style={'textAlign': 'center'}),
+            html.Br(),
+            html.Div(
+                Row(
+                    children=[
+                        Col(html.Div(
+                            Button(html.H5(nm), id='%s_view' % nm, n_clicks=0, style={'width': '100%'}, color="light")
+                        )) for nm in VIEW_NMS
+                    ],
+                ),
+            ),
+            html.Br(),
+            html.Div(id='slider_div', children=[self.get_period_slider()], className="p-3 bg-light border rounded-3",),
+            html.Br(),
+            Offcanvas([*entity_selection_dropdown], id='filter_panel', style={'height':'80%'}, className="p-3 bg-light border rounded-3", is_open=False, placement='bottom'),
+            html.Div(id='figs', children=fig_space),
+            navbar
             ]
         )
 
@@ -293,6 +314,17 @@ class Dashboard:
             fig_space = self.get_fig_space_layout(figs)
 
             return fig_space, *input_val
+
+        @self.app.callback(
+            Output('filter_panel', 'is_open'),
+            [
+                Input('filter_panel_button', 'n_clicks')
+            ],
+            prevent_initial_call=True
+        )
+        def open_filter_panel(n_clicks):
+
+            return True
         
 
     def get_app_server(self):
