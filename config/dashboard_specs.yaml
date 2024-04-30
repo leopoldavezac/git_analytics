@@ -44,6 +44,7 @@ knowledge_perenity:
 coding_activity:
   layout: [
     [activity_evolution],
+    [dev_evolution],
     [module_stability],
     [component_stability],
   ]  
@@ -58,6 +59,19 @@ coding_activity:
         aggfunc: sum
       source_df_nm: commits_files
 
+    dev_evolution:
+      nm: 'dev stability : prop of activity by dev'
+      def:
+        concept: stability
+        freq: M
+        mesure: n_code_lines_inserted
+        entity: author_nm
+        aggfunc: sum
+        normalize_axis: 1
+        unstack_level: 0
+        aggfunc: sum
+      source_df_nm: commits_files
+      
     module_stability:
       nm: 'module stability : prop of module coded by month'
       def:
