@@ -1,5 +1,5 @@
-from git_analytics.visualization import visualize, CMD_NM
-from git_analytics.config_management import instanciate_config_manager
+from src.visualization import visualize, CMD_NM
+from src.config_management import instanciate_config_manager
 
 def main() -> None:
     config_manager = instanciate_config_manager(CMD_NM)

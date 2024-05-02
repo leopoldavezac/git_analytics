@@ -8,7 +8,7 @@
             "module": "flask",
             "env": {
                 "PYTHONPATH": "${workspaceRoot}",
-                "FLASK_APP": "${workspaceRoot}/git_analytics/launch_dashboard.py",
+                "FLASK_APP": "${workspaceRoot}/src/launch_dashboard.py",
                 "FLASK_ENV": "development",
                 "FLASK_DEBUG": "0"
             },
@@ -24,7 +24,7 @@
             "name": "prep_data",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceRoot}/git_analytics/data_preparation.py",
+            "program": "${workspaceRoot}/src/data_preparation.py",
             "args": [
                 "pydici", //codebase_nm
                 ".", //src_path
@@ -43,7 +43,7 @@
             "name": "parse_git",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceRoot}/git_analytics/git_log_parsing.py",
+            "program": "${workspaceRoot}/src/git_log_parsing.py",
             "args": [
                 "pydici", //codebase_nm
                 "./dev_assets/pydici", //repo_path

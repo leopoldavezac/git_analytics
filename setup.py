@@ -2,13 +2,13 @@ from setuptools import setup
 
 
 setup(
-    name='git_analytics',
-    packages=['git_analytics'],
+    name='repo_health_analyzer',
+    packages=['src'],
     entry_points = {
         'console_scripts': [
-            'parse_git=git_analytics.git_log_parsing:main',
-            'prep_data=git_analytics.data_preparation:main',
-            'visualize=git_analytics.launch_dashboard:main',
+            'parse_git=src.git_log_parsing:main',
+            'prep_data=src.data_preparation:main',
+            'visualize=src.launch_dashboard:main',
             ],
     }
 )         

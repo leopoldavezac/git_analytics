@@ -1,6 +1,6 @@
 from os import listdir
 
-from git_analytics.config_management import ConfigManager
+from src.config_management import ConfigManager
 
 DATA_PATH = './data'
 
@@ -18,10 +18,10 @@ CMD_NM_TO_OUTPUT_FORMAT = {
 def map_cmd_to_func(cmd_nm:str): #to avoid circular import
 
     if cmd_nm == 'parse_git':
-        from git_analytics.git_log_parsing import parse_git_log
+        from src.git_log_parsing import parse_git_log
         return parse_git_log
     elif cmd_nm == 'prep_data':
-        from git_analytics.data_preparation import prepare_data
+        from src.data_preparation import prepare_data
         return prepare_data
 
         

@@ -2,7 +2,7 @@ from subprocess import run
 
 from pandas import DataFrame
 
-from git_analytics.config_management import instanciate_config_manager, ConfigManager
+from src.config_management import instanciate_config_manager, ConfigManager
 
 DATA_PATH = './data'
 

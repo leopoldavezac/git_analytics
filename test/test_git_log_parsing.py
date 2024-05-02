@@ -1,7 +1,7 @@
 from pandas import DataFrame
 from pandas.testing import assert_frame_equal
 
-from git_analytics.git_log_parsing import GitLogParser
+from src.git_log_parsing import GitLogParser
 
 
 def test_git_log_parsing():

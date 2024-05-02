@@ -1,12 +1,12 @@
 
 import os
 
-from git_analytics.visualization import visualize
-from git_analytics.config_management import ConfigManager
+from src.visualization import visualize
+from src.config_management import ConfigManager
 
-import git_analytics.utilities
-import git_analytics.cmd_chaining
-import git_analytics.git_log_parsing
+import src.utilities
+import src.cmd_chaining
+import src.git_log_parsing
 
 
 def test_visualize(mocker):
@@ -32,23 +32,23 @@ def test_visualize(mocker):
     config_manager.set_stats_template_from_file()
 
     mocker.patch.object(
-        git_analytics.utilities,
+        src.utilities,
         'DATA_PATH',
         './test/temp/data'
         )
     mocker.patch.object(
-        git_analytics.cmd_chaining,
+        src.cmd_chaining,
         'DATA_PATH',
         './test/temp/data'
         )
     mocker.patch.object(
-        git_analytics.git_log_parsing,
+        src.git_log_parsing,
         'DATA_PATH',
         './test/temp/data'
         )
 
     mocker.patch(
-        'git_analytics.analysis.Dashboard.run_server',
+        'src.analysis.Dashboard.run_server',
         run_server_mock
     )
 

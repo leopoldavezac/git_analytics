@@ -1,7 +1,7 @@
-from git_analytics.commit_files_tagging import CommitFilesTagger
-from git_analytics.config_management import ConfigManager, instanciate_config_manager
-from git_analytics.cmd_chaining import run_predessor_if_needed
-from git_analytics.utilities import (
+from src.commit_files_tagging import CommitFilesTagger
+from src.config_management import ConfigManager, instanciate_config_manager
+from src.cmd_chaining import run_predessor_if_needed
+from src.utilities import (
     get_parsed_git_log,
     add_agg_column_on_id,
     denormalize_cols_on_id,

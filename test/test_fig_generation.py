@@ -4,7 +4,7 @@ import pytest
 
 from pandas.testing import assert_frame_equal
 
-from git_analytics.fig_generation import Transformer
+from src.fig_generation import Transformer
 
 
 DF_COMMITS = pd.DataFrame(

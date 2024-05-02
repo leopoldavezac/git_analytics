@@ -3,7 +3,7 @@
 from pandas import DataFrame, Series
 from pandas.testing import assert_frame_equal, assert_series_equal
 
-from git_analytics.utilities import handle_file_renaming, AuthorNameGrouper
+from src.utilities import handle_file_renaming, AuthorNameGrouper
 
 import pytest
 

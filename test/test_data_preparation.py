@@ -5,12 +5,12 @@ import pandas as pd
 
 from pandas.testing import assert_frame_equal
 
-from git_analytics.config_management import ConfigManager
+from src.config_management import ConfigManager
 
-import git_analytics.data_preparation
-import git_analytics.utilities
-import git_analytics.cmd_chaining
-import git_analytics.git_log_parsing
+import src.data_preparation
+import src.utilities
+import src.cmd_chaining
+import src.git_log_parsing
 
 
 
@@ -23,17 +23,17 @@ def test_prep_data(mocker):
     config_manager.module_depth = 1
     
     mocker.patch.object(
-        git_analytics.utilities,
+        src.utilities,
         'DATA_PATH',
         './test/temp/data'
         )
     mocker.patch.object(
-        git_analytics.cmd_chaining,
+        src.cmd_chaining,
         'DATA_PATH',
         './test/temp/data'
         )
     mocker.patch.object(
-        git_analytics.git_log_parsing,
+        src.git_log_parsing,
         'DATA_PATH',
         './test/temp/data'
         )
@@ -100,7 +100,7 @@ def test_prep_data(mocker):
 
     os.system('unzip test/asset/repo.zip') #test repo is stored as zip to avoid maintaning two git repo
 
-    git_analytics.data_preparation.prepare_data(config_manager)
+    src.data_preparation.prepare_data(config_manager)
 
     obtained_commits = pd.read_parquet('./test/temp/data/random_reward_bot_clean_commits.parquet')
     obtained_commits_files = pd.read_parquet('./test/temp/data/random_reward_bot_clean_commits_files.parquet')

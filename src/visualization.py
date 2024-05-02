@@ -7,10 +7,10 @@ from dash import Dash, html, dcc, Output, Input, callback_context
 from dash_bootstrap_components import Container, Col, Row, Button, Offcanvas, Navbar
 from dash_bootstrap_components.themes import BOOTSTRAP
 
-from git_analytics.utilities import read
-from git_analytics.cmd_chaining import run_predessor_if_needed
-from git_analytics.fig_generation import FigGenerator
-from git_analytics.config_management import ConfigManager
+from src.utilities import read
+from src.cmd_chaining import run_predessor_if_needed
+from src.fig_generation import FigGenerator
+from src.config_management import ConfigManager
 
 CMD_NM = 'visualize'
 

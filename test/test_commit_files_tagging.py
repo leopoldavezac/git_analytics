@@ -3,7 +3,7 @@ import pytest
 
 from pandas.testing import assert_frame_equal
 
-from git_analytics.commit_files_tagging import CommitFilesTagger
+from src.commit_files_tagging import CommitFilesTagger
 
 
 @pytest.mark.parametrize(

@@ -1,6 +1,6 @@
 __pycache__
 .pytest_cache
-git_analytics.egg-info
+src.egg-info
 notes.md
 /data/*.parquet
 test/temp/data/*.parquet
@@ -8,3 +8,4 @@ test/temp/data/*.parquet
 dev_assets/pydici
 .DS_Store
 venv
+*.egg-info
