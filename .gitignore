@@ -7,3 +7,4 @@ test/temp/data/*.parquet
 .ipynb_checkpoints
 dev_assets/pydici
 .DS_Store
+venv

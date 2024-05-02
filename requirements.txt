@@ -1,0 +1,10 @@
+pytest==7.1
+pyyaml==6.0
+pytest-mock==3.8
+numpy==1.23
+pandas==1.4
+dash==2.5
+pyarrow==8.0
+dash-bootstrap-components==1.2.1
+flask==2.1.2
+werkzeug==2.1.2
