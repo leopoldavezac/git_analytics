@@ -21,13 +21,18 @@ VIEW_NMS = ['overview', 'coding_activity', 'knowledge_perenity']
 
 class Dashboard:
 
-    ENTITY_INPUT_NMS = ["module_nm", "component_nm", "author_nm", "ext"]
+    entity_input_nms = ["module_nm", "author_nm", "ext"]
 
-    def __init__(self, specs:dict, codebase_nm:str) -> None:
+    def __init__(self, specs:dict, codebase_nm:str, has_components:bool) -> None:
 
         self.specs = specs
         self.codebase_nm = codebase_nm
+        self.has_components = has_components
         self.df_base = read(codebase_nm, 'commits_files')
+
+        # test that component nm exists if not update entity input names
+        if self.has_components:
+            self.entity_input_nms.append('component_nm')
 
         self.view_nm = 'overview'
         self.view_memory = [0, 0, 0]
@@ -40,7 +45,7 @@ class Dashboard:
         
         self.selection = {
             entity_nm:{"value":None, "filter":self.get_base_filter(), "focus":False}
-            for entity_nm in self.ENTITY_INPUT_NMS+["period"]
+            for entity_nm in self.entity_input_nms+["period"]
             }
         
     def get_base_filter(self):
@@ -75,12 +80,15 @@ class Dashboard:
 
         start = self.df_base.index.min()
         end = self.df_base.index.max()
-        intervals = pd.date_range(start, end, freq='M')
+
+        intervals = pd.date_range(start, end, freq='2W')
         self.intervals = [
-            "%s-%d" % (month, year)
-            for month, year in zip(intervals.strftime('%b'), intervals.year)
-        ][::4]
-        n_intervals = len(self.intervals)-1
+            "%s %s-%d" % (day, month, year)
+            for day, month, year 
+            in zip(intervals.strftime('%d'), intervals.strftime('%b'), intervals.year)
+        ]
+
+        n_intervals = len(self.intervals)
 
         self.selection["period"]["value"] = [0, n_intervals]
 
@@ -90,14 +98,14 @@ class Dashboard:
             step=None,
             marks={i:dt for i,dt in enumerate(self.intervals)},
             allowCross=False,
-            id='period_slider',
+            id='period_selection',
             value=self.selection["period"]["value"],
             persistence=INPUT_PERSISTENCE_LOCATION
         )
 
     def get_entity_selection_dropdown(self, entity_nm):
 
-        labels = self.df_base[entity_nm].unique().tolist()
+        labels = self.df_base[entity_nm].dropna().unique().tolist()
         key_labels = self.get_key_labels(entity_nm)
         self.selection[entity_nm]['value'] = key_labels
         self.selection[entity_nm]['focus'] = True
@@ -131,9 +139,9 @@ class Dashboard:
 
         entity_selection_dropdown = [
             self.get_entity_selection_dropdown(entity_nm)
-            for entity_nm in self.ENTITY_INPUT_NMS
+            for entity_nm in self.entity_input_nms
         ]
-
+        
         df = self.focus_on_key_element(self.df_base)
         figs = self.get_figs(df) 
         fig_space = self.get_fig_space_layout(figs)
@@ -223,7 +231,7 @@ class Dashboard:
 
         df = df.copy(deep=True)
 
-        for entity_nm in self.ENTITY_INPUT_NMS:
+        for entity_nm in self.entity_input_nms:
             if self.selection[entity_nm]['focus'] == False:
                 key_labels = self.get_key_labels(entity_nm, df)
                 self.update_selection(entity_nm, key_labels)
@@ -233,7 +241,7 @@ class Dashboard:
 
     def reset_focus_state(self):
         
-        for entity_nm in self.ENTITY_INPUT_NMS:
+        for entity_nm in self.entity_input_nms:
             self.selection[entity_nm]['focus'] = False
 
     def update_is_an_add(self, entity_nm, new_selection):
@@ -249,7 +257,7 @@ class Dashboard:
 
         entity_inputs = [
             Input('%s_selection' % entity_nm, 'value')
-            for entity_nm in self.ENTITY_INPUT_NMS
+            for entity_nm in self.entity_input_nms
         ]
 
         view_inputs = [
@@ -259,7 +267,7 @@ class Dashboard:
 
         entity_outputs = [
             Output('%s_selection' % entity_nm, 'value')
-            for entity_nm in self.ENTITY_INPUT_NMS
+            for entity_nm in self.entity_input_nms
         ]
 
         @self.app.callback(
@@ -270,7 +278,7 @@ class Dashboard:
             [
                 *entity_inputs,
                 *view_inputs,
-                Input('period_slider', 'value')
+                Input('period_selection', 'value')
             ],
             prevent_initial_call=True
         )
@@ -297,7 +305,7 @@ class Dashboard:
             entity_nm = triggered_id[:-10]
 
             element_added = False #assume not by default and update otherwise
-        
+
             element_added = self.update_is_an_add(entity_nm, new_values)
             self.update_selection(entity_nm, new_values)
             self.reset_focus_state()
@@ -338,7 +346,7 @@ class Dashboard:
 def visualize(config_manager:ConfigManager) -> Dashboard:
 
     run_predessor_if_needed(CMD_NM, config_manager)
-    web_app = Dashboard(config_manager['dashboard_specs'], config_manager['codebase_nm'])
+    web_app = Dashboard(config_manager['dashboard_specs'], config_manager['codebase_nm'], config_manager['has_components'])
     web_app.set_initial_layout()
     web_app.set_callback()
 

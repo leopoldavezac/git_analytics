@@ -80,11 +80,11 @@ class CLIArgumentParser:
                 'option':['prep_data', 'visualize']
             },
         },
-        'custom_stats':{
+        'has_component':{
             'type':bool,
             'nargs':None,
-            'help':'indicates whether a custom config for stats must be used (config/<codebase_nm>_stats.yaml)',
-            'flags':['--custom_stats', '-cs'],
+            'help':'indicates whether you have specify any components when running prep_data',
+            'flags':['--has_components', '-hc'],
             'arg_type_to_cmds':{
                 'required':[],
                 'option':['visualize']
@@ -161,8 +161,7 @@ class ConfigManager(dict):
     component_nms = None
     component_depth = None
 
-    custom_stats = False
-
+    has_components = False
     rerun = False
 
     def set_config_with_cli_args(self, args:Namespace) -> None:
@@ -184,8 +183,12 @@ class ConfigManager(dict):
         return True
 
     def set_dashboard_specs_from_config(self) -> None:
-
+        
         template_path = join('config', 'dashboard_specs.yaml')
+
+        if self.has_components:
+            template_path = join('config', 'dashboard_specs_with_components.yaml')
+
         with open(template_path, 'r') as f:
             self.dashboard_specs = load(f, Loader=FullLoader)
 

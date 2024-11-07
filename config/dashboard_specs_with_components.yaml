@@ -1,10 +1,21 @@
 knowledge_perenity:
   layout: [
+    [component_specialization],
     [module_specialization],
     [lang_specialization]
   ]
 
   stats:
+    component_specialization:
+      nm: 'component specialization : prop of component coded by dev'
+      def:
+        concept: specialization
+        entity: ['author_nm', 'component_nm']
+        mesure: n_code_lines_inserted
+        aggfunc: sum
+        normalize_axis: 1
+        unstack_level: 0
+      source_df_nm: commits_files
 
     module_specialization:
       nm: 'module specialization : prop of module coded by dev'
@@ -35,6 +46,7 @@ coding_activity:
     [activity_evolution],
     [dev_evolution],
     [module_stability],
+    [component_stability],
   ]  
 
   stats:
@@ -73,14 +85,35 @@ coding_activity:
         aggfunc: sum
       source_df_nm: commits_files
 
+    component_stability:
+      nm: 'component stability : prop of component coded by month'
+      def:
+        concept: stability
+        freq: M
+        mesure: n_code_lines_inserted
+        entity: component_nm
+        aggfunc: sum
+        normalize_axis: 1
+        unstack_level: 0
+        aggfunc: sum
+      source_df_nm: commits_files
+
 
 overview:
   layout: [
-    [module_size],
+    [component_size, module_size],
     [lang_repartition, dev_activity]
   ]  
 
   stats:
+    component_size:
+      nm: 'component size'
+      def:
+        concept: size
+        entity: component_nm
+        mesure: n_code_lines_inserted
+        aggfunc: sum
+      source_df_nm: commits_files
 
     lang_repartition:
       nm: 'language repartition'
