@@ -171,7 +171,7 @@ class Dashboard:
 
     def compute_key_labels(self, axis):
 
-        min_prop_of_max = 0.1
+        min_prop_of_max = 0.05
 
         key_labels = (
             self.df_base
