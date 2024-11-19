@@ -1,3 +1,5 @@
+import json
+
 from pandas import to_datetime
 
 from src.commit_files_tagging import CommitFilesTagger
@@ -6,6 +8,23 @@ from src.cmd_chaining import run_predecessor
 from src.utilities import get_parsed_git_log, save_as_parquet
 
 CMD_NM = 'prep_data'
+
+def apply_author_nm_merging(df_commit):
+    
+    try:
+        with open('config/author_nm_merging.json', 'r') as f:
+            author_nm_mapping = json.load(f)
+
+    except FileNotFoundError:
+        return df_commit
+    
+    except json.JSONDecodeError:
+        raise ValueError("The file 'config/author_nm_merging.json' is not a valid JSON.")
+
+    df_commit['author_nm'] = df_commit['author_nm'].replace(author_nm_mapping)
+
+    return df_commit
+
 
 def tag_commit_files(df_commit_files, config_manager):
 
@@ -173,6 +192,8 @@ def prepare_data(config_manager) -> None:
     
     df_commit = get_parsed_git_log(config_manager['codebase_nm'], 'commits')
     df_commit = cast_to_ref_types(df_commit)
+    df_commit = apply_author_nm_merging(df_commit)
+    # group author nm
     
     df_commit_files = get_parsed_git_log(config_manager['codebase_nm'], 'commits_files')
     df_commit_files = handle_file_renaming(df_commit_files)
