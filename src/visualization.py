@@ -278,7 +278,7 @@ class Dashboard:
         axis_label_selection_dropdown = Offcanvas(
             [*axis_label_selection_dropdown],
             id='filter_panel',
-            style={'height':'80%'},
+            style={'height':'50%'},
             className="p-3 bg-light border rounded-3",
             is_open=False,
             placement='bottom'
