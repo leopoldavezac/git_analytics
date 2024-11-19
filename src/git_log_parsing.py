@@ -3,6 +3,7 @@ from subprocess import run
 from pandas import DataFrame, concat
 
 from src.config_management import instanciate_config_manager, ConfigManager
+from src.utilities import save_raw
 
 DATA_PATH = './data'
 CMD_NM = 'parse_git'
@@ -118,8 +119,8 @@ def parse_git_log(config_manager:ConfigManager) -> None:
     df_commit, df_commit_files = git_log_parser.get_commit_as_dfs()
 
     codebase_name = config_manager['codebase_nm']
-    df_commit.to_csv('%s/%s_raw_commits.csv' % (DATA_PATH, codebase_name), index=False)
-    df_commit_files.to_csv('%s/%s_raw_commits_files.csv' % (DATA_PATH, codebase_name), index=False)
+    save_raw(df_commit, codebase_name, 'commit')
+    save_raw(df_commit_files, codebase_name, 'commit_files')
 
 def main() -> None:
 

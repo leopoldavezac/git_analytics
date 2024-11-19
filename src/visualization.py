@@ -1,13 +1,10 @@
-from numpy import zeros
 import pandas as pd
-
-from flask import Flask
 
 from dash import Dash, html, dcc, Output, Input, callback_context
 from dash_bootstrap_components import Container, Col, Row, Button, Offcanvas, Navbar
 from dash_bootstrap_components.themes import BOOTSTRAP
 
-from src.utilities import read
+from src.utilities import read_cleaned
 from src.fig_generation import FigGenerator
 from src.config_management import ConfigManager
 
@@ -26,11 +23,10 @@ class Dashboard:
         self.specs = specs
         self.codebase_nm = codebase_nm
        
-        self.df_base = read(codebase_nm, 'commits_files')
+        self.df_base = read_cleaned(codebase_nm, 'commits_files')
         self.df_current = self.df_base.copy(deep=True)
 
         if 'component_nm' in self.df_base.columns:
-            # entity could be better named
             self.analysis_axis.append('component_nm')
 
         self.current_view_nm = 'overview'
@@ -84,7 +80,7 @@ class Dashboard:
                     children=[
                         Col(html.Div(
                             Button(
-                                html.H5(nm), id='%s_view' % nm, n_clicks=0,
+                                html.H5(nm.replace("_", " ")), id='%s_view' % nm, n_clicks=0,
                                 style={'width': '100%'},
                                 color="light"
                             )
@@ -393,7 +389,7 @@ class Dashboard:
         return self.app.server
         
     def run_server(self):
-        self.app.run(debug=True)
+        self.app.run()
 
 
 def visualize(config_manager:ConfigManager) -> Dashboard:

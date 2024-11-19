@@ -1,3 +1,4 @@
+from os.path import join
 import json
 
 from pandas import to_datetime
@@ -5,14 +6,16 @@ from pandas import to_datetime
 from src.commit_files_tagging import CommitFilesTagger
 from src.config_management import instanciate_config_manager
 from src.cmd_chaining import run_predecessor
-from src.utilities import get_parsed_git_log, save_as_parquet
+from src.utilities import read_raw, save_cleaned
 
 CMD_NM = 'prep_data'
 
-def apply_author_nm_merging(df_commit):
+def apply_author_nm_merging(df_commit, codebase_nm):
     
+    file_path = join('data', codebase_nm, 'author_nm_merging.json')
+
     try:
-        with open('config/author_nm_merging.json', 'r') as f:
+        with open(file_path) as f:
             author_nm_mapping = json.load(f)
 
     except FileNotFoundError:
@@ -190,20 +193,19 @@ def cast_to_ref_types(df):
 
 def prepare_data(config_manager) -> None:
     
-    df_commit = get_parsed_git_log(config_manager['codebase_nm'], 'commits')
+    df_commit = read_raw(config_manager['codebase_nm'], 'commits')
     df_commit = cast_to_ref_types(df_commit)
-    df_commit = apply_author_nm_merging(df_commit)
-    # group author nm
+    df_commit = apply_author_nm_merging(df_commit, config_manager['codebase_nm'])
     
-    df_commit_files = get_parsed_git_log(config_manager['codebase_nm'], 'commits_files')
+    df_commit_files = read_raw(config_manager['codebase_nm'], 'commits_files')
     df_commit_files = handle_file_renaming(df_commit_files)
     df_commit_files = tag_commit_files(df_commit_files, config_manager)
     df_commit_files = compute_n_code_lines(df_commit_files)    
     df_commit_files = denormalize(df_commit_files, df_commit, ['author_nm', 'creation_dt'])
     df_commit_files = cast_to_ref_types(df_commit_files)
 
-    save_as_parquet(df_commit, config_manager['codebase_nm'], 'commits')
-    save_as_parquet(df_commit_files, config_manager['codebase_nm'], 'commits_files')
+    save_cleaned(df_commit, config_manager['codebase_nm'], 'commits')
+    save_cleaned(df_commit_files, config_manager['codebase_nm'], 'commits_files')
 
 
 def main() -> None:
@@ -218,9 +220,3 @@ def main() -> None:
 
 if __name__ == '__main__':
     prepare_data()
-
-
-# fix test
-# rename prepare data
-# refactor commit files tagging
-   

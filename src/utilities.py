@@ -4,9 +4,7 @@ from yaml import load, FullLoader
 
 from pandas import (
     read_parquet,
-    to_datetime,
     DataFrame, 
-    concat,
     read_csv
 )
 
@@ -30,19 +28,24 @@ DATA_PATH = './data'
 CONFIG_PATH = './config'
 
 
-    # output type should be explicit in name 
-def get_parsed_git_log(codebase_nm:str, log_level:str) -> DataFrame:
+def read_raw(codebase_nm:str, log_level:str) -> DataFrame:
     
     file_path = join(DATA_PATH, '%s_raw_%s.csv' % (codebase_nm, log_level))
     return read_csv(file_path)
 
-def save_as_parquet(df:DataFrame, codebase_nm:str, log_level:str) -> None:
+
+def save_raw(df:DataFrame, codebase_nm:str, log_level:str) -> DataFrame:
+    
+    file_path = join(DATA_PATH, '%s_raw_%s.csv' % (codebase_nm, log_level))
+    df.to_csv(file_path, index=False)
+
+def save_cleaned(df:DataFrame, codebase_nm:str, log_level:str) -> None:
 
     file_path = join(DATA_PATH, '%s_clean_%s.parquet' % (codebase_nm, log_level))
     df.to_parquet(file_path, engine='pyarrow', version="2.4")
 
 
-def read(codebase_nm:str, log_level:str) -> DataFrame:
+def read_cleaned(codebase_nm:str, log_level:str) -> DataFrame:
 
     file_path = join(DATA_PATH, '%s_clean_%s.parquet' % (codebase_nm, log_level))
     df = read_parquet(file_path, engine='pyarrow')
