@@ -262,7 +262,9 @@ class Dashboard:
             ),
             fixed='bottom', color="#FFFFFF"
         )
-
+        
+        navbar = html.Div([html.Br(), html.Br(), html.Br(), navbar])
+        
         return navbar
     
 
