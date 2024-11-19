@@ -90,7 +90,7 @@ class Transformer:
             if operation_nm == 'normalize':
                 return df.pipe(lambda dfx: dfx.divide(dfx.sum(axis=arg_value), axis=(not bool(arg_value))))
             else:
-                raise UnknownOperation('Operation: %s is not supported' % operation_nm)
+                raise UnknownOperation(f'Operation: {operation_nm} is not supported')
 
     def get_transformed(self, df):
 

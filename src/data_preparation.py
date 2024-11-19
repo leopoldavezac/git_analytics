@@ -1,5 +1,6 @@
 from os.path import join
 import json
+import logging
 
 from pandas import to_datetime
 
@@ -8,20 +9,33 @@ from src.config_management import instanciate_config_manager
 from src.cmd_chaining import run_predecessor
 from src.utilities import read_raw, save_cleaned
 
+logging.basicConfig(
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    level=logging.INFO,
+    handlers=[logging.StreamHandler()]
+)
+
+logger = logging.getLogger()
+
 CMD_NM = 'prep_data'
 
+
 def apply_author_nm_merging(df_commit, codebase_nm):
+    logger.info(f"Attempting to apply author name merging for {codebase_nm}.")
     
     file_path = join('data', codebase_nm, 'author_nm_merging.json')
 
     try:
         with open(file_path) as f:
             author_nm_mapping = json.load(f)
-
+        logger.info(f"Author name mapping loaded from {file_path}")
+    
     except FileNotFoundError:
+        logger.warning(f"File {file_path} not found. Skipping author name merging.")
         return df_commit
     
     except json.JSONDecodeError:
+        logger.error(f"The file '{file_path}' is not a valid JSON.")
         raise ValueError("The file 'config/author_nm_merging.json' is not a valid JSON.")
 
     df_commit['author_nm'] = df_commit['author_nm'].replace(author_nm_mapping)
@@ -29,20 +43,22 @@ def apply_author_nm_merging(df_commit, codebase_nm):
     return df_commit
 
 
-def tag_commit_files(df_commit_files, config_manager):
 
+def tag_commit_files(df_commit_files, config_manager):
+    logger.info("Tagging commit files based on configuration.")
+    
     commits_files_tagger = CommitFilesTagger(
         config_manager['src_path'],
         config_manager['module_depth'],
         config_manager['component_nms'],
         config_manager['component_depth'],
-        )
+    )
     
     df_commit_files = commits_files_tagger.tag_file_ext(df_commit_files)
     df_commit_files = commits_files_tagger.tag_src_file(df_commit_files)
     
     if config_manager['component_nms'] is not None:
-       df_commit_files = commits_files_tagger.tag_component(df_commit_files)
+        df_commit_files = commits_files_tagger.tag_component(df_commit_files)
 
     df_commit_files = commits_files_tagger.tag_module(df_commit_files)
 
@@ -88,7 +104,7 @@ def get_mapping_as_dict(df_file_path_mapping):
 
     return {v[0]:v[1] for _, v in df_file_path_mapping.iterrows()}
 
-# file path update not file renaming
+
 def handle_file_renaming(df_commit_files):
 
     REGEX_FILE_PATH_UPDATE = r'([A-z\./0-9\-_]*){{0,1}([A-z\./0-9\-_]*) => ([A-z\./0-9\-_]*)}{0,1}([A-z\./0-9\-_]*)'
@@ -133,8 +149,8 @@ def compute_n_code_lines(df_commit_files):
 
     for action_nm in ['inserted', 'deleted']:
 
-        n_lines_action_nm = 'n_lines_%s' % action_nm
-        n_code_lines_action_nm = 'n_code_lines_%s' % action_nm
+        n_lines_action_nm = f'n_lines_{action_nm}'
+        n_code_lines_action_nm = f'n_code_lines_{action_nm}'
 
         df_commit_files[n_code_lines_action_nm] = (
             df_commit_files[n_lines_action_nm].where(
@@ -191,8 +207,11 @@ def cast_to_ref_types(df):
     return df
 
 
+
+
 def prepare_data(config_manager) -> None:
-    
+    logger.info(f"Preparing data for codebase {config_manager['codebase_nm']}.")
+
     df_commit = read_raw(config_manager['codebase_nm'], 'commits')
     df_commit = cast_to_ref_types(df_commit)
     df_commit = apply_author_nm_merging(df_commit, config_manager['codebase_nm'])
@@ -206,16 +225,18 @@ def prepare_data(config_manager) -> None:
 
     save_cleaned(df_commit, config_manager['codebase_nm'], 'commits')
     save_cleaned(df_commit_files, config_manager['codebase_nm'], 'commits_files')
+    logger.info("Data preparation complete.")
 
 
 def main() -> None:
+    logger.info("Starting the data preparation process.")
 
     config_manager = instanciate_config_manager(CMD_NM)
     run_predecessor(CMD_NM, config_manager)
 
     prepare_data(config_manager)
-    # not print but log
-    print('\nOK - log data of %s has been sucessfully prepared.\n' % config_manager['codebase_nm'])
+    logger.info(f"Log data for {config_manager['codebase_nm']} has been successfully prepared.")
+
 
 
 if __name__ == '__main__':

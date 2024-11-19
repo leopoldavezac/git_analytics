@@ -30,7 +30,7 @@ def run_cmd(cmd_nm:str, config_manager:ConfigManager) -> None:
     cmd_func = map_cmd_to_func(cmd_nm)
 
     if not config_manager.check_completion_for(cmd_nm):
-        raise ValueError('Insuficent arguments for running %s.' % cmd_nm)
+        raise ValueError(f'Insuficent arguments for running {cmd_nm}.')
     else:
         cmd_func(config_manager)
 
