@@ -15,6 +15,8 @@ knowledge_perenity:
         aggfunc: sum
         normalize_axis: 1
         unstack_level: 0
+        xaxis_title: 'Module'
+        yaxis_title: 'Developer'
       source_df_nm: commits_files
 
     lang_specialization:
@@ -26,6 +28,8 @@ knowledge_perenity:
         aggfunc: sum
         normalize_axis: 1
         unstack_level: 0
+        xaxis_title: 'Language'
+        yaxis_title: 'Developer'
       source_df_nm: commits_files
 
 
@@ -45,6 +49,8 @@ coding_activity:
         freq: M
         mesure: n_code_lines_inserted
         aggfunc: sum
+        xaxis_title: 'Date'
+        yaxis_title: 'Number of lines of code'
       source_df_nm: commits_files
 
     dev_evolution:
@@ -58,6 +64,8 @@ coding_activity:
         normalize_axis: 1
         unstack_level: 0
         aggfunc: sum
+        xaxis_title: 'Date'
+        yaxis_title: 'Developer'
       source_df_nm: commits_files
       
     module_stability:
@@ -71,6 +79,8 @@ coding_activity:
         normalize_axis: 1
         unstack_level: 0
         aggfunc: sum
+        xaxis_title: 'Date'
+        yaxis_title: 'Module'
       source_df_nm: commits_files
 
 
@@ -98,13 +108,17 @@ overview:
         entity: module_nm
         mesure: n_code_lines_inserted
         aggfunc: sum
+        xaxis_title: 'Number of lines of code'
+        yaxis_title: 'Module'
       source_df_nm: commits_files
 
     dev_activity:
-      nm: 'developper activity'
+      nm: 'developer activity'
       def:
         concept: size
         entity: author_nm
         mesure: n_code_lines_inserted
         aggfunc: sum
+        xaxis_title: 'Number of lines of code'
+        yaxis_title: 'Developer'
       source_df_nm: commits_files

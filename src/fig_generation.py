@@ -151,16 +151,23 @@ class FigGenerator(Transformer):
         normalize_axis=1,
         aggfunc='count',
         freq='M',
-        unstack_level=0
+        unstack_level=0,
+        xaxis_title='',
+        yaxis_title=''
         ):
 
         super().__init__(concept, mesure, entity, normalize_axis, aggfunc, freq, unstack_level)
         self.title = title
+        self.xaxis_title = xaxis_title
+        self.yaxis_title = yaxis_title
+
         self.fig_func = self.CONCEPT_TO_FIG[concept]
         self.fig_arg_struct = self.CONCEPT_TO_FIG_ARG_STRUCT[concept]
         self.custom_dims = self.CONCEPT_TO_FIG_CUSTOM_DIMS[concept]
         self.base_layout = self.CONCEPT_TO_BASE_LAYOUT[concept]
         self.base_layout.update(self.GENERIC_LAYOUT_ARG)
+
+
 
         self.time = 'creation_dt' # fig_gen allow for dynamic time var_nm but transformer does not yet
 
@@ -199,7 +206,12 @@ class FigGenerator(Transformer):
             layout_arg[dim_nm] = dim_size
 
         return layout_arg
+    
+    def __update_axis_titles(self, fig, fig_arg):
 
+        if fig_arg['title'] != 'language repartition':
+
+            fig.update_layout({'xaxis_title':self.xaxis_title, 'yaxis_title':self.yaxis_title})
 
     def get_fig(self, df):
         
@@ -214,5 +226,7 @@ class FigGenerator(Transformer):
         layout_arg = self.__get_layout_arg(df, fig_arg)
         layout_arg.update(self.base_layout)
         fig.update_layout(layout_arg)
+
+        self.__update_axis_titles(fig, fig_arg)
 
         return fig
