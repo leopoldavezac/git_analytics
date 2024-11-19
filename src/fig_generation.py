@@ -2,77 +2,38 @@ from plotly.express import imshow, line, bar, pie
 
 from copy import deepcopy
 
-CONCEPT_TO_FIG_ARG_STRUCT = {
-    'specialization':{'title':'title'},
-    'stability':{'title':'title'},
-    'evolution':{'x':'time', 'y':'mesure', 'title':'title'},
-    'size':{'x':'mesure', 'y':'entity', 'orientation':'$h', 'title':'title'},
-    'repartition':{'names':'entity', 'values':'mesure', 'title':'title'}
-}
-
-CONCEPT_TO_OPERATION_SUITE = {
-    'stability' : ['groupby', 'resample', 'agg', 'unstack', 'normalize', 'T', 'round', 'replace'],
-    'evolution' : ['resample', 'agg', 'reset_index'],
-    'specialization' : ['groupby', 'agg', 'unstack', 'normalize', 'T', 'round', 'replace'],
-    'size' : ['groupby', 'agg', 'reset_index'],
-    'repartition' : ['groupby', 'agg', 'reset_index']
-}
-
-OPERATION_NM_TO_ARG_NM = {
-    'groupby':'entity',
-    'resample':'freq',
-    'agg':'mesure',
-    'unstack':'unstack_level',
-    'normalize':'normalize_axis',
-    'reset_index':'NONE',
-    'sum':'NONE',
-    'nunique':'NONE',
-    'count':'NONE',
-    'replace':'REPLACE_ARG',
-    'round':'ROUND_ARG',
-
-}
-
-CONCEPT_TO_FIG = {
-    'stability':imshow,
-    'evolution':line,
-    'specialization':imshow,
-    'repartition':pie,
-    'size':bar
-}
-
-CONCEPT_TO_FIG_CUSTOM_DIMS = {
-    'stability':['height'],
-    'specialization':['height', 'width'],
-    'specialization':[],
-    'evolution':[],
-    'repartition':[],
-    'size':['height'],
-}
-
-DIM_NM_TO_AXIS_NM = {
-    'height':'y',
-    'width':'x'
-}
-
-CONCEPT_TO_BASE_LAYOUT = {
-    'stability':{'yaxis':{'tickmode':'linear'}},
-    'specialization':{'yaxis':{'tickmode':'linear'}, 'xaxis':{'tickmode':'linear'}},
-    'evolution':{},
-    'repartition':{},
-    'size':{'yaxis':{'tickmode':'linear'}}
-}
-
-GENERIC_LAYOUT_ARG = {'template':'plotly_white', 'font':{'size':13}}
 
 class UnknownOperation(Exception):
     pass
 
 class Transformer:
 
-    _REPLACE_ARG = {0:None}
-    _ROUND_ARG = 2
-    _NONE = None
+    CONCEPT_TO_OPERATION_SUITE = {
+        'stability' : ['groupby', 'resample', 'agg', 'unstack', 'normalize', 'T', 'round', 'replace'],
+        'evolution' : ['resample', 'agg', 'reset_index'],
+        'specialization' : ['groupby', 'agg', 'unstack', 'normalize', 'T', 'round', 'replace'],
+        'size' : ['groupby', 'agg', 'reset_index'],
+        'repartition' : ['groupby', 'agg', 'reset_index']
+    }
+
+    OPERATION_NM_TO_ARG_NM = {
+        'groupby':'entity',
+        'resample':'freq',
+        'agg':'mesure',
+        'unstack':'unstack_level',
+        'normalize':'normalize_axis',
+        'reset_index':'NONE',
+        'sum':'NONE',
+        'nunique':'NONE',
+        'count':'NONE',
+        'replace':'REPLACE_ARG',
+        'round':'ROUND_ARG',
+
+    }
+
+    REPLACE_ARG = {0:None}
+    ROUND_ARG = 2
+    NONE = None
 
     def __init__(
         self,
@@ -85,15 +46,15 @@ class Transformer:
         unstack_level=0
         ):
 
-        self._concept = concept
-        self._mesure = mesure
-        self._entity = entity
-        self._normalize_axis = normalize_axis
-        self._aggfunc = aggfunc
-        self._freq = freq
-        self._unstack_level = unstack_level
+        self.concept = concept
+        self.mesure = mesure
+        self.entity = entity
+        self.normalize_axis = normalize_axis
+        self.aggfunc = aggfunc
+        self.freq = freq
+        self.unstack_level = unstack_level
         
-        self.operations = deepcopy(CONCEPT_TO_OPERATION_SUITE[concept]) #why ?
+        self.operations = deepcopy(self.CONCEPT_TO_OPERATION_SUITE[concept]) #why ?
         self.__fill_agg_placeholder_operation(aggfunc, mesure)
 
     def __fill_agg_placeholder_operation(self, aggfunc, mesure):
@@ -104,10 +65,10 @@ class Transformer:
         self.operations.pop(agg_index+2)
 
     def __get_operation_arg(self, operation_nm):
-
-        arg_nm = OPERATION_NM_TO_ARG_NM[operation_nm]
+        
+        arg_nm = self.OPERATION_NM_TO_ARG_NM[operation_nm]
         if arg_nm:
-            arg_value = getattr(self, '_%s' % arg_nm)
+            arg_value = getattr(self, arg_nm)
             return arg_value
         else:
             return None
@@ -124,7 +85,8 @@ class Transformer:
                 return getattr(df, operation_nm)(arg_value)
             else:
                 return getattr(df, operation_nm)()
-        except AttributeError: #custom operation
+            
+        except AttributeError: 
             if operation_nm == 'normalize':
                 return df.pipe(lambda dfx: dfx.divide(dfx.sum(axis=arg_value), axis=(not bool(arg_value))))
             else:
@@ -140,6 +102,46 @@ class Transformer:
 
 class FigGenerator(Transformer):
 
+    CONCEPT_TO_FIG = {
+        'stability':imshow,
+        'evolution':line,
+        'specialization':imshow,
+        'repartition':pie,
+        'size':bar
+    }
+
+    CONCEPT_TO_FIG_ARG_STRUCT = {
+        'specialization':{'title':'title'},
+        'stability':{'title':'title'},
+        'evolution':{'x':'time', 'y':'mesure', 'title':'title'},
+        'size':{'x':'mesure', 'y':'entity', 'orientation':'$h', 'title':'title'},
+        'repartition':{'names':'entity', 'values':'mesure', 'title':'title'}
+    }
+
+    CONCEPT_TO_FIG_CUSTOM_DIMS = {
+        'stability':['height'],
+        'specialization':['height', 'width'],
+        'specialization':[],
+        'evolution':[],
+        'repartition':[],
+        'size':['height'],
+    }
+
+    DIM_NM_TO_AXIS_NM = {
+        'height':'y',
+        'width':'x'
+    }
+
+    CONCEPT_TO_BASE_LAYOUT = {
+        'stability':{'yaxis':{'tickmode':'linear'}},
+        'specialization':{'yaxis':{'tickmode':'linear'}, 'xaxis':{'tickmode':'linear'}},
+        'evolution':{},
+        'repartition':{},
+        'size':{'yaxis':{'tickmode':'linear'}}
+    }
+
+    GENERIC_LAYOUT_ARG = {'template':'plotly_white', 'font':{'size':13}}
+
     def __init__(
         self,
         concept,
@@ -151,40 +153,31 @@ class FigGenerator(Transformer):
         freq='M',
         unstack_level=0
         ):
-        
-        self._time = 'creation_dt' # fig_gen allow for dynamic time var_nm but transformer does not yet
 
-        self.fig = CONCEPT_TO_FIG[concept]
-        self.fig_arg_struct =  CONCEPT_TO_FIG_ARG_STRUCT[concept]
+        super().__init__(concept, mesure, entity, normalize_axis, aggfunc, freq, unstack_level)
+        self.title = title
+        self.fig_func = self.CONCEPT_TO_FIG[concept]
+        self.fig_arg_struct = self.CONCEPT_TO_FIG_ARG_STRUCT[concept]
+        self.custom_dims = self.CONCEPT_TO_FIG_CUSTOM_DIMS[concept]
+        self.base_layout = self.CONCEPT_TO_BASE_LAYOUT[concept]
+        self.base_layout.update(self.GENERIC_LAYOUT_ARG)
 
-        self.base_layout = CONCEPT_TO_BASE_LAYOUT[concept]
-        self.base_layout.update(GENERIC_LAYOUT_ARG)
-
-        self.custom_dims = CONCEPT_TO_FIG_CUSTOM_DIMS[concept]
-
-        self._title = title
-
-        Transformer.__init__(self, concept, mesure, entity, normalize_axis, aggfunc, freq, unstack_level)
+        self.time = 'creation_dt' # fig_gen allow for dynamic time var_nm but transformer does not yet
 
     def __get_fig_arg(self):
 
         fig_arg = {}
-
         for k, v in self.fig_arg_struct.items():
-            
             if v[0] == '$':
                 fig_arg[k] = v[1:]
             else:
-                fig_arg[k] = getattr(self, '_%s' % v)
+                fig_arg[k] = getattr(self, v)
 
         return fig_arg
 
     def __get_dim_size(self, n_ticks, tick_font_size=13):
 
-        COEF = 400
-        size = COEF * n_ticks / tick_font_size
-
-        return size if size > 250 else 250
+        return max(250, (400 * n_ticks) // tick_font_size)
 
 
     def __get_layout_arg(self, df, fig_arg):
@@ -193,7 +186,7 @@ class FigGenerator(Transformer):
 
         for dim_nm in self.custom_dims:
 
-            axis_nm = DIM_NM_TO_AXIS_NM[dim_nm]
+            axis_nm = self.DIM_NM_TO_AXIS_NM[dim_nm]
 
             if len(fig_arg) == 1:
                 n_ticks = df.shape[axis_nm == 'x']
@@ -213,10 +206,11 @@ class FigGenerator(Transformer):
         df = self.get_transformed(df)        
         fig_arg = self.__get_fig_arg()
 
-        if self._concept in ['specialization', 'stability']:        
-            fig = self.fig(df, **fig_arg, aspect='auto', zmax=1, zmin=0, color_continuous_scale='tealgrn')
+        if self.concept in ['specialization', 'stability']:        
+            fig = self.fig_func(df, **fig_arg, aspect='auto', zmax=1, zmin=0, color_continuous_scale='tealgrn')
         else:
-            fig = self.fig(df, **fig_arg, color_discrete_sequence=['skyblue'])
+            fig = self.fig_func(df, **fig_arg, color_discrete_sequence=['skyblue'])
+            
         layout_arg = self.__get_layout_arg(df, fig_arg)
         layout_arg.update(self.base_layout)
         fig.update_layout(layout_arg)

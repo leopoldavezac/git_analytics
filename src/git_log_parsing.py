@@ -1,22 +1,36 @@
 from subprocess import run
 
-from pandas import DataFrame
+from pandas import DataFrame, concat
 
 from src.config_management import instanciate_config_manager, ConfigManager
 
 DATA_PATH = './data'
-
-PRETTY_FORMAT = '+++%H\t%ad\t%an\t%s'
 CMD_NM = 'parse_git'
 
 class GitLogParser():
 
+    COMMIT_FORMAT = '+++%H\t%ad\t%an\t%s'
+    COMMIT_SEP = '+++'
 
     def __init__(self, path_to_repo):
 
         self.path_to_repo = path_to_repo
 
-    def __run_command(self, command):
+        self.df_commit = (
+            DataFrame([], columns=['id', 'creation_dt', 'author_nm', 'msg'])
+            .astype({'id':'str', 'creation_dt':'str', 'author_nm':'str', 'msg':'str'})
+        )
+
+        self.df_commit_files = (
+            DataFrame(
+                [],
+                columns=['commit_id', 'file_path', 'n_lines_inserted', 'n_lines_deleted'],
+            )
+            .astype({'commit_id':'str', 'file_path':'str', 'n_lines_inserted':'int', 'n_lines_deleted':'int'})
+        )
+
+    def __run_command_in_cli(self, command):
+        
         process = run(command.split(" "), capture_output=True)
         log = process.stdout.decode('utf-8')
 
@@ -25,110 +39,93 @@ class GitLogParser():
 
         return log
     
-    def __get_log(self):
+    def get_raw_log(self):
+        
+        command = f"git -C {self.path_to_repo} log --all -M -C --numstat --date=iso --pretty=format:{self.COMMIT_FORMAT}"
+        
+        return self.__run_command_in_cli(command)
 
-        command = "git -C %s log --all -M -C --numstat --date=iso --pretty=format:%s" % (
-            self.path_to_repo, PRETTY_FORMAT
-            )
+    def __cast_to_int(self, n_lines):
 
-        return self.__run_command(command)
+        return 0 if n_lines == '-' else int(n_lines)
 
+    def __parse_files_info(self, commit_id, files_info):
+  
+        files_info = files_info[:-2] #remove commit end msg character
 
-    def __get_files_info(self, commit_id, commit_files_log):
-                
-        commit_files_log = commit_files_log[:-2]
-        files_info = []
+        for i, info in enumerate(files_info):
+            
+            info = info.split('\t')
 
-        for commit_file_log in commit_files_log:
+            nb_inserted_lines, nb_deleted_lines, file_path = info
 
-            commit_file_log = commit_file_log.split('\t')
+            nb_inserted_lines = self.__cast_to_int(nb_inserted_lines)
+            nb_deleted_lines = self.__cast_to_int(nb_deleted_lines)
 
-            if commit_file_log[0] == '-':
-                nb_inserted_lines = 0
-                nb_deleted_lines = 0
-            else:
-                nb_inserted_lines = int(commit_file_log[0])
-                nb_deleted_lines = int(commit_file_log[1])
-
-            files_info.append([
-                commit_id,
-                commit_file_log[2],
-                nb_inserted_lines,
-                nb_deleted_lines,
-            ])
+            files_info[i] = [commit_id, file_path, nb_inserted_lines, nb_deleted_lines]
 
         return files_info
 
-    def handle_tab_in_commit_msg(self, commit_info):
+    def __handle_tab_in_msg(self, header):
 
-        commit_info[3] = ' '.join(commit_info[3:])
-        commit_info = commit_info[:4]
+        header[3] = ' '.join(header[3:])
+        header = header[:4]
 
-        return commit_info
+        return header
+    
+    def __format_files_info_as_df(self, files_info):
 
-    def __parse_log(self, log:str) -> None:
+        self.df_commit_files = concat([
+            self.df_commit_files,
+            DataFrame(files_info, columns=self.df_commit_files.columns)
+        ], axis=0, ignore_index=True)
 
-        log = log.split('+++')[1:]
+    def parse_log(self, log:str) -> None:
+
+        log = log.split(self.COMMIT_SEP)[1:] # remove empty first element -> cf self.pretty_format
+
+        log[-1] += '\n' #update last commit to keep the same structure as other commits 
+
+        files_info = []
+
+        for commit in log:
+
+            commit = commit.split('\n')
+            header = commit[0].split('\t')
+            commit_files_info = commit[1:]
+            
+            header_nb_attributes = 4
+            if len(header) > header_nb_attributes:
+                header = self.__handle_tab_in_msg(header)
+            
+            self.df_commit.loc[len(self.df_commit),:] = header
+
+            commit_files_info = self.__parse_files_info(header[0], commit_files_info)
+            files_info += commit_files_info
         
-        log[-1] += '\n' #so last block can be dealt like the others ones
+        self.__format_files_info_as_df(files_info)
 
-        self.commits = []
-        self.commits_files = []
+    def get_commit_as_dfs(self): 
 
-        for commit_log in log:
-
-            commit_log = commit_log.split('\n')
-            commit_info = commit_log[0].split('\t')
-
-            if len(commit_info) > 4:
-                commit_info = self.handle_tab_in_commit_msg(commit_info)
-
-            commit_files_info = self.__get_files_info(commit_info[0], commit_log[1:])
-
-            self.commits.append(commit_info)
-            self.commits_files += commit_files_info
-
-        self.df_commits = DataFrame(
-            self.commits,
-            columns=['id', 'creation_dt', 'author_nm', 'msg']
-        )
-        self.df_commits_files = DataFrame(
-            self.commits_files,
-            columns=['commit_id', 'file_nm', 'n_lines_inserted', 'n_lines_deleted']
-        )
-
-
-    def get_parsed_commits(self):
-        try:
-            return self.df_commits
-        except AttributeError:
-            self.__parse_log(self.__get_log())
-            return self.df_commits
-
-    def get_parsed_commits_files(self):
-
-        try:
-            return self.df_commits_files
-        except AttributeError:
-            self.__parse_log(self.__get_log())
-            return self.df_commits_files
+        return self.df_commit, self.df_commit_files
 
 
 def parse_git_log(config_manager:ConfigManager) -> None:
 
-    path_to_repo = config_manager['path_to_repo']
-    git_log_parser = GitLogParser(path_to_repo)
-    df_commits = git_log_parser.get_parsed_commits()
-    df_commits_files = git_log_parser.get_parsed_commits_files()
+    git_log_parser = GitLogParser(config_manager['path_to_repo'])
+    log = git_log_parser.get_raw_log()
+    git_log_parser.parse_log(log)
+    df_commit, df_commit_files = git_log_parser.get_commit_as_dfs()
 
     codebase_name = config_manager['codebase_nm']
-    df_commits.to_csv('%s/%s_raw_commits.csv' % (DATA_PATH, codebase_name), index=False)
-    df_commits_files.to_csv('%s/%s_raw_commits_files.csv' % (DATA_PATH, codebase_name), index=False)
+    df_commit.to_csv('%s/%s_raw_commits.csv' % (DATA_PATH, codebase_name), index=False)
+    df_commit_files.to_csv('%s/%s_raw_commits_files.csv' % (DATA_PATH, codebase_name), index=False)
 
 def main() -> None:
 
     config_manager = instanciate_config_manager(CMD_NM)
     parse_git_log(config_manager)
+    # not print but log
     print('\nOK - git log of %s sucessfully parsed.\n' % config_manager['codebase_nm'])
 
 

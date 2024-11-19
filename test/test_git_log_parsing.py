@@ -40,18 +40,17 @@ def test_git_log_parsing():
             ["ac945860b3f5eaf21ce65308ad2b33b475831041", "ovidentia/admin/addons.php", 9, 16],
             ["47d8d655209ac82a4031d5000bc44223cea1cc8a", "ovidentia/utilit/addonapi.php", 11, 0],
         ],
-        columns=['commit_id', 'file_nm', 'n_lines_inserted', 'n_lines_deleted']
+        columns=['commit_id', 'file_path', 'n_lines_inserted', 'n_lines_deleted']
     )
 
    
     parser = GitLogParser('None') # get log will not be used
 
-    parser._GitLogParser__parse_log(INPUT)
-    obtained_commit = parser.get_parsed_commits()
-    obtained_files = parser.get_parsed_commits_files()
+    parser.parse_log(INPUT)
+    obtained_df_commit, obtained_df_commit_files = parser.get_commit_as_dfs()
 
-    assert_frame_equal(obtained_commit, EXPECTED_COMMIT)
-    assert_frame_equal(obtained_files, EXPECTED_FILES)
+    assert_frame_equal(obtained_df_commit, EXPECTED_COMMIT)
+    assert_frame_equal(obtained_df_commit_files, EXPECTED_FILES)
 
 
 def test_handle_tab_in_commit_msg():
@@ -68,7 +67,7 @@ def test_handle_tab_in_commit_msg():
 
     parser = GitLogParser('None') # get log will not be used
 
-    parser._GitLogParser__parse_log(INPUT)
-    obtained_commit = parser.get_parsed_commits()
+    parser.parse_log(INPUT)
+    obtained_df_commit, _ = parser.get_commit_as_dfs()
 
-    assert_frame_equal(obtained_commit, EXPECTED_COMMIT)
+    assert_frame_equal(obtained_df_commit, EXPECTED_COMMIT)

@@ -1,23 +1,19 @@
 from re import sub
 
-LANGS = ['py', 'php', 'cpp', 'cs', 'java', 'js', 'ts', 'csproj']
-
 class CommitFilesTagger:
+
+    LANGS = ['py', 'php', 'cpp', 'cs', 'java', 'js', 'ts', 'csproj']
 
     def __init__(
         self,
-        df,
         src_path,
         module_depth,
-        component_nms,
-        component_depth
-        ) -> None:
-        
-        self.src_path = src_path
-        self.df = df
-
+        component_nms=None,
+        component_depth=None
+        ):
+                
         self.src_struct = {
-            'path':src_path,
+            'path': src_path,
             'module_depth':module_depth,
             'component':{'depth':component_depth, 'nms':component_nms}
         }
@@ -29,90 +25,79 @@ class CommitFilesTagger:
         else:
             self.src_struct['component_and_module_aligned'] = False
 
-    def __tag_file_ext(self):
+    def tag_file_ext(self, df):
 
-        lang_regex = '\\.(%s)$' % '|'.join(LANGS)
-        self.df['ext'] = self.df.file_nm.str.extract(lang_regex) 
-        self.df.ext.fillna('other', inplace=True)
+        lang_regex = '\\.(%s)$' % '|'.join(self.LANGS)
+        df['ext'] = df.file_path.str.extract(lang_regex) 
+        df.ext.fillna('other', inplace=True)
 
-    def __tag_type(self) -> None:
+        return df
+
+    def tag_src_file(self, df) -> None:
 
         path = self.src_struct['path']
-        path = sub('^\\./|^/', '', path)
+        path = sub('^\\./|^/', '', path) # cleanup path of special char
 
         if path == '.':
-            self.df['is_src'] = True
+            df['is_src'] = True
         else:
-            self.df['is_src'] = self.df.file_nm.str.slice(
+            df['is_src'] = df.file_path.str.slice(
                 0, len(path)
             ) == path
+
+        return df
+
 
     def __get_component_nms_regex(self, component_struct):
 
         return '(%s)' % '|'.join(component_struct['nms'])
 
-    def __tag_component(self) -> None:
 
-        component_struct = getattr(self, 'src_struct')['component']
-        component_depth = component_struct['depth']
+    def tag_component(self, df) -> None:
+
+        component_struct = self.src_struct['component']
         component_nms_regex = self.__get_component_nms_regex(component_struct)
 
-        self.df.loc[self.df['is_src'], 'component_nm'] = (
-            self.df
-            .loc[self.df['is_src']]
-            .file_nm
-            .str.split('/', expand=True)
-            .iloc[:,component_depth]
-            .str.lower()
+        df.loc[df['is_src'], 'component_nm'] = (
+            df
+            .loc[df['is_src']]
+            .file_path.str.split('/', expand=True)
+            .iloc[:,component_struct['depth']]
             .str.extract(component_nms_regex)
             .values
         )
 
-        self.df.component_nm.fillna('other', inplace=True)
+        df.component_nm.fillna('other', inplace=True)
 
-    def __tag_module(self):
+        return df
+    
 
-        repo_struct = getattr(self, 'src_struct')
+    def remove_component_nm_from_module_nm(self, df):
 
-        self.df.loc[self.df.is_src, 'module_nm'] = (
-            self.df
-            .loc[self.df.is_src]
-            .file_nm
-            .str.split('/', expand=True)
-            .iloc[:,repo_struct['module_depth']]
-            .str.lower()
-            .str.replace('(\\.%s)$' % '|\\.'.join(LANGS), '', regex=True)
+        component_nms_regex = self.__get_component_nms_regex(self.src_struct['component'])
+        df.loc[df.is_src, 'module_nm'] = (
+            df.loc[df.is_src]
+            # remove component nm from module
+            .module_nm.str.replace(component_nms_regex, '', regex=True)
+            .str.replace('(\\.|_|-)$', '', regex=True)
             .values
         )
 
-        if repo_struct['component_and_module_aligned']:
-            component_nms_regex = self.__get_component_nms_regex(repo_struct['component'])
-            self.df.loc[self.df.is_src, 'module_nm'] = (
-                self.df
-                .loc[self.df.is_src]
-                .module_nm
-                .str.replace(component_nms_regex, '', regex=True)
-                .str.replace('(\\.|_|-)$', '', regex=True)
-                .values
-            )
-       
-    def __tag(self):
+        return df
 
-        self.__tag_file_ext()
-        self.__tag_type()
-            
-        if self.src_struct['component']['nms'] is not None:
-            self.__tag_component()
 
-        self.__tag_module()
+    def tag_module(self, df):
 
-        
+        df.loc[df.is_src, 'module_nm'] = (
+            df.loc[df.is_src]
+            # get module nm using file path
+            .file_path.str.split('/', expand=True).iloc[:,self.src_struct['module_depth']]
+            # remove extensions (case where module is at file level)
+            .str.replace('(\\.%s)$' % '|\\.'.join(self.LANGS), '', regex=True)
+            .values
+        )
 
-    def get_tagged_files(self):
+        if self.src_struct['component_and_module_aligned']:
+            df = self.remove_component_nm_from_module_nm(df)
 
-        try:
-            self.df['module_nm']
-        except KeyError:
-            self.__tag()
-        
-        return self.df
+        return df   

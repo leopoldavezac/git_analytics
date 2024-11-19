@@ -6,7 +6,8 @@ DATA_PATH = './data'
 
 CMD_NM_TO_PRECURSOR_CMD_NM = {
     'visualize':'prep_data',
-    'prep_data':'parse_git'
+    'prep_data':'parse_git',
+    'parse_git':None
 }
 
 CMD_NM_TO_OUTPUT_FORMAT = {
@@ -23,7 +24,6 @@ def map_cmd_to_func(cmd_nm:str): #to avoid circular import
     elif cmd_nm == 'prep_data':
         from src.data_preparation import prepare_data
         return prepare_data
-
         
 def run_cmd(cmd_nm:str, config_manager:ConfigManager) -> None:
 
@@ -34,19 +34,20 @@ def run_cmd(cmd_nm:str, config_manager:ConfigManager) -> None:
     else:
         cmd_func(config_manager)
 
-def command_has_run(cmd_nm, codebase_nm):
+def check_if_command_has_run(cmd_nm, codebase_nm):
 
     cmd_output_nm = CMD_NM_TO_OUTPUT_FORMAT[cmd_nm] % codebase_nm
 
     return cmd_output_nm in listdir(DATA_PATH)
 
-def run_predessor_if_needed(cmd_nm:str, config_manager:ConfigManager) -> None:
+def run_predecessor(cmd_nm: str, config_manager: ConfigManager) -> None:
+    precursor_cmd_nm = CMD_NM_TO_PRECURSOR_CMD_NM.get(cmd_nm)
 
-    precursor_cmd_nm = CMD_NM_TO_PRECURSOR_CMD_NM[cmd_nm]
-        
-    if config_manager['rerun']:
-        run_cmd(precursor_cmd_nm, config_manager)
+    if precursor_cmd_nm is None:  
+        run_cmd(cmd_nm, config_manager)
     else:
-        if not command_has_run(precursor_cmd_nm, config_manager['codebase_nm']):
-            run_cmd(precursor_cmd_nm, config_manager)
-            
+        if config_manager['rerun'] or not check_if_command_has_run(precursor_cmd_nm, config_manager['codebase_nm']):
+            run_predecessor(precursor_cmd_nm, config_manager)  
+
+        if cmd_nm != "visualize":
+            run_cmd(cmd_nm, config_manager)

@@ -9,8 +9,6 @@ from yaml import load, FullLoader
     
 from argparse import ArgumentParser, Namespace
     
-DEBUG_CODEBASE_NM = 'pydici'
-
 class CLIArgumentParser:
 
     _CMD_NM_TO_DESC = {
@@ -80,7 +78,7 @@ class CLIArgumentParser:
                 'option':['prep_data', 'visualize']
             },
         },
-        'has_component':{
+        'has_components':{
             'type':bool,
             'nargs':None,
             'help':'indicates whether you have specify any components when running prep_data',
@@ -122,28 +120,12 @@ class CLIArgumentParser:
                     flags = arg_spec.pop('flags')
                     self.parser.add_argument(*flags, **arg_spec)
 
-    def handle_debug_mode_args(self) -> None:
-
-        # sys.args is updated to avoid conflict with flask arg parser
-        if sys.argv[1] == 'run':
-            sys.argv = [sys.argv[0], DEBUG_CODEBASE_NM]
-
-    def parse_args(self) -> None:
-
-        if self.cmd_nm == 'visualize':
-            self.handle_debug_mode_args()
-
-        self.args = self.parser.parse_args()
-        
-    def get_args(self) -> Namespace:
-        return self.args
 
 def get_args_from_cli(cmd_nm:str):
 
     parse_git_arg_parser = CLIArgumentParser(cmd_nm)
-    parse_git_arg_parser.parse_args()
 
-    return parse_git_arg_parser.get_args()
+    return parse_git_arg_parser.parser.parse_args()
 
 
 class ConfigManager(dict):
@@ -151,7 +133,7 @@ class ConfigManager(dict):
     _CMD_NM_TO_REQUIRED_PARAM_NMS = {
         'parse_git':['codebase_nm', 'path_to_repo'],
         'prep_data':['codebase_nm', 'src_path', 'module_depth'],
-        'visualize':['codebase_nm']
+        'visualize':['codebase_nm', 'has_components']
     }
 
     codebase_nm = None
@@ -160,8 +142,8 @@ class ConfigManager(dict):
     module_depth = None
     component_nms = None
     component_depth = None
+    has_components = None
 
-    has_components = False
     rerun = False
 
     def set_config_with_cli_args(self, args:Namespace) -> None:

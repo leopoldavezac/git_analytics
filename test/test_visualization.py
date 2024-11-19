@@ -1,7 +1,7 @@
 
 import os
 
-from src.visualization import visualize
+from src.launch_dashboard import main as launch_dashboard
 from src.config_management import ConfigManager
 
 import src.utilities
@@ -9,7 +9,7 @@ import src.cmd_chaining
 import src.git_log_parsing
 
 
-def test_visualize(mocker):
+def test_integration_visualize(mocker):
 
     def run_server_mock(self):
         pass
@@ -29,7 +29,8 @@ def test_visualize(mocker):
     config_manager.module_depth = 1
     config_manager.component_nms = ['app', 'reward']
     config_manager.component_depth = 1
-    config_manager.set_stats_template_from_file()
+    config_manager.has_components = True
+    config_manager.set_dashboard_specs_from_config()
 
     mocker.patch.object(
         src.utilities,
@@ -48,13 +49,15 @@ def test_visualize(mocker):
         )
 
     mocker.patch(
-        'src.analysis.Dashboard.run_server',
+        'src.visualization.Dashboard.run_server',
         run_server_mock
     )
 
+    mocker.patch('src.launch_dashboard.instanciate_config_manager', return_value=config_manager)
+
     os.system('unzip test/asset/repo.zip') #test repo is stored as zip to avoid maintaning two git repo
 
-    visualize(config_manager)
+    launch_dashboard()
 
     obtained_output_nms = os.listdir('./test/temp/data').sort()
 
