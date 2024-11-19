@@ -7,7 +7,7 @@ knowledge_perenity:
 
   stats:
     component_specialization:
-      nm: 'component specialization : prop of component coded by dev'
+      nm: 'Developer Contribution by Component'
       def:
         concept: specialization
         entity: ['author_nm', 'component_nm']
@@ -20,7 +20,7 @@ knowledge_perenity:
       source_df_nm: commits_files
 
     module_specialization:
-      nm: 'module specialization : prop of module coded by dev'
+      nm: 'Developer Contribution by Module'
       def:
         concept: specialization
         entity: ['author_nm', 'module_nm']
@@ -33,7 +33,7 @@ knowledge_perenity:
       source_df_nm: commits_files
 
     lang_specialization:
-      nm: 'lang specialization : prop of lang coded by dev'
+      nm: 'Developer Contribution by Programming Language'
       def:
         concept: specialization
         entity: ['author_nm', 'ext']
@@ -55,18 +55,18 @@ coding_activity:
 
   stats:
     activity_evolution:
-      nm: 'activity evolution'
+      nm: 'Development Activity Overall'
       def:
         concept: evolution
         freq: M
         mesure: n_code_lines_inserted
         aggfunc: sum
         xaxis_title: 'Date'
-        yaxis_title: 'Number of lines of code'
+        yaxis_title: 'Number of Lines of Code'
       source_df_nm: commits_files
 
     dev_evolution:
-      nm: 'dev stability : prop of activity by dev'
+      nm: 'Development Activity by Developer'
       def:
         concept: stability
         freq: M
@@ -80,7 +80,7 @@ coding_activity:
       source_df_nm: commits_files
       
     module_stability:
-      nm: 'module stability : prop of module coded by month'
+      nm: 'Development Activity by Module'
       def:
         concept: stability
         freq: M
@@ -94,7 +94,7 @@ coding_activity:
       source_df_nm: commits_files
 
     component_stability:
-      nm: 'component stability : prop of component coded by month'
+      nm: 'Development Activity by Component'
       def:
         concept: stability
         freq: M
@@ -115,29 +115,29 @@ overview:
 
   stats:
     component_size:
-      nm: 'component size'
+      nm: Component Size'
       def:
         concept: size
         entity: component_nm
         mesure: n_code_lines_inserted
         aggfunc: sum
-        xaxis_title: 'Number of lines of code'
+        xaxis_title: 'Number of Lines of Code'
         yaxis_title: 'Component'
       source_df_nm: commits_files
 
     module_size:
-      nm: 'module size'
+      nm: 'Module Size'
       def:
         concept: size
         entity: module_nm
         mesure: n_code_lines_inserted
         aggfunc: sum
-        xaxis_title: 'Number of lines of code'
+        xaxis_title: 'Number of Lines of Code'
         yaxis_title: 'Module'
       source_df_nm: commits_files
 
     lang_repartition:
-      nm: 'language repartition'
+      nm: 'Programming Language Used'
       def:
         concept: repartition
         entity: ext
@@ -146,12 +146,12 @@ overview:
       source_df_nm: commits_files
 
     dev_activity:
-      nm: 'developer activity'
+      nm: 'Developer Activity Breakdown'
       def:
         concept: size
         entity: author_nm
         mesure: n_code_lines_inserted
         aggfunc: sum
-        xaxis_title: 'Number of lines of code'
+        xaxis_title: 'Number of Lines of Code'
         yaxis_title: 'Developer'
       source_df_nm: commits_files
