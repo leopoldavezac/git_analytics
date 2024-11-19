@@ -120,8 +120,7 @@ class FigGenerator(Transformer):
 
     CONCEPT_TO_FIG_CUSTOM_DIMS = {
         'stability':['height'],
-        'specialization':['height', 'width'],
-        'specialization':[],
+        'specialization':['height'],
         'evolution':[],
         'repartition':[],
         'size':['height'],
@@ -184,7 +183,7 @@ class FigGenerator(Transformer):
 
     def __get_dim_size(self, n_ticks, tick_font_size=13):
 
-        return max(250, (400 * n_ticks) // tick_font_size)
+        return ((300 * n_ticks) // tick_font_size) + 200
 
 
     def __get_layout_arg(self, df, fig_arg):
