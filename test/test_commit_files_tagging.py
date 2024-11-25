@@ -2,7 +2,7 @@ from pandas import DataFrame
 import pytest
 
 from pandas.testing import assert_frame_equal
-from src.data_preparation import tag_commit_files
+from src.data_preparation import tag_commit_file
 
 @pytest.mark.parametrize(
     "config_manager,df,expected_df",
@@ -90,6 +90,6 @@ from src.data_preparation import tag_commit_files
     ]
 )
 def test_tag(config_manager, df, expected_df):
-    df = tag_commit_files(df, config_manager)
+    df = tag_commit_file(df, config_manager)
 
     assert_frame_equal(df, expected_df)

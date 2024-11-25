@@ -11,8 +11,8 @@ CMD_NM_TO_PRECURSOR_CMD_NM = {
 }
 
 CMD_NM_TO_OUTPUT_FORMAT = {
-    'parse_git':'%s_raw_commits.csv',
-    'prep_data':'%s_clean_commits.parquet'
+    'parse_git':'%s_raw_commit.csv',
+    'prep_data':'%s_clean_commit.parquet'
 }
 
 

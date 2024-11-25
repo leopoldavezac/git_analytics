@@ -33,7 +33,7 @@ class Dashboard:
         self.specs = specs
         self.codebase_nm = codebase_nm
        
-        self.df_base = read_cleaned(codebase_nm, 'commits_files')
+        self.df_base = read_cleaned(codebase_nm, 'commit_file')
         self.df_current = self.df_base.copy(deep=True)
 
         if 'component_nm' in self.df_base.columns:

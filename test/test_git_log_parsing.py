@@ -47,10 +47,10 @@ def test_git_log_parsing():
     parser = GitLogParser('None') # get log will not be used
 
     parser.parse_log(INPUT)
-    obtained_df_commit, obtained_df_commit_files = parser.get_commit_as_dfs()
+    obtained_df_commit, obtained_df_commit_file = parser.get_commit_as_dfs()
 
     assert_frame_equal(obtained_df_commit, EXPECTED_COMMIT)
-    assert_frame_equal(obtained_df_commit_files, EXPECTED_FILES)
+    assert_frame_equal(obtained_df_commit_file, EXPECTED_FILES)
 
 
 def test_handle_tab_in_commit_msg():

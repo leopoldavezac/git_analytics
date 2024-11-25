@@ -4,7 +4,7 @@ import logging
 
 from pandas import to_datetime
 
-from src.commit_files_tagging import CommitFilesTagger
+from src.commit_file_tagging import CommitFilesTagger
 from src.config_management import instanciate_config_manager
 from src.cmd_chaining import run_predecessor
 from src.utilities import read_raw, save_cleaned
@@ -45,7 +45,7 @@ def apply_author_nm_merging(df_commit, codebase_nm):
 
 
 
-def tag_commit_files(df_commit_files, config_manager):
+def tag_commit_file(df_commit_file, config_manager):
     logger.info("Tagging commit files based on configuration.")
     
     commits_files_tagger = CommitFilesTagger(
@@ -55,15 +55,15 @@ def tag_commit_files(df_commit_files, config_manager):
         config_manager['component_depth'],
     )
     
-    df_commit_files = commits_files_tagger.tag_file_ext(df_commit_files)
-    df_commit_files = commits_files_tagger.tag_src_file(df_commit_files)
+    df_commit_file = commits_files_tagger.tag_file_ext(df_commit_file)
+    df_commit_file = commits_files_tagger.tag_src_file(df_commit_file)
     
     if config_manager['component_nms'] is not None:
-        df_commit_files = commits_files_tagger.tag_component(df_commit_files)
+        df_commit_file = commits_files_tagger.tag_component(df_commit_file)
 
-    df_commit_files = commits_files_tagger.tag_module(df_commit_files)
+    df_commit_file = commits_files_tagger.tag_module(df_commit_file)
 
-    return df_commit_files
+    return df_commit_file
 
 
 def handle_root_files(df_file_path_mapping):
@@ -76,11 +76,11 @@ def handle_root_files(df_file_path_mapping):
     return df_file_path_mapping
 
 
-def set_new_file_path_on_update(df_commit_files, df_file_path_mapping):
+def set_new_file_path_on_update(df_commit_file, df_file_path_mapping):
     
-    df_commit_files.loc[df_file_path_mapping.index, 'file_path'] = df_file_path_mapping.new.values
+    df_commit_file.loc[df_file_path_mapping.index, 'file_path'] = df_file_path_mapping.new.values
 
-    return df_commit_files
+    return df_commit_file
 
 
 def handle_multi_renaming(df_file_path_mapping):
@@ -106,17 +106,17 @@ def get_mapping_as_dict(df_file_path_mapping):
     return {v[0]:v[1] for _, v in df_file_path_mapping.iterrows()}
 
 
-def handle_file_renaming(df_commit_files):
+def handle_file_renaming(df_commit_file):
 
     REGEX_FILE_PATH_UPDATE = r'([A-z\./0-9\-_]*){{0,1}([A-z\./0-9\-_]*) => ([A-z\./0-9\-_]*)}{0,1}([A-z\./0-9\-_]*)'
 
-    filter_file_path_update = df_commit_files.file_path.str.contains(' => ')
+    filter_file_path_update = df_commit_file.file_path.str.contains(' => ')
 
     if filter_file_path_update.sum() == 0:
-        return df_commit_files
+        return df_commit_file
 
     df_file_path_mapping = (
-        df_commit_files
+        df_commit_file
         .loc[filter_file_path_update]
         .pipe(lambda dfx: (
             dfx
@@ -136,36 +136,36 @@ def handle_file_renaming(df_commit_files):
         [['old', 'new']]
     )
 
-    df_commit_files = set_new_file_path_on_update(df_commit_files, df_file_path_mapping)
+    df_commit_file = set_new_file_path_on_update(df_commit_file, df_file_path_mapping)
 
     df_file_path_mapping = handle_multi_renaming(df_file_path_mapping)
 
     file_path_mapping = get_mapping_as_dict(df_file_path_mapping)
-    df_commit_files['file_path'] = df_commit_files.file_path.replace(file_path_mapping)
+    df_commit_file['file_path'] = df_commit_file.file_path.replace(file_path_mapping)
 
-    return df_commit_files
+    return df_commit_file
 
 
-def compute_n_code_lines(df_commit_files):
+def compute_n_code_lines(df_commit_file):
 
     for action_nm in ['inserted', 'deleted']:
 
         n_lines_action_nm = f'n_lines_{action_nm}'
         n_code_lines_action_nm = f'n_code_lines_{action_nm}'
 
-        df_commit_files[n_code_lines_action_nm] = (
-            df_commit_files[n_lines_action_nm].where(
-                df_commit_files.ext != 'other', 0
+        df_commit_file[n_code_lines_action_nm] = (
+            df_commit_file[n_lines_action_nm].where(
+                df_commit_file.ext != 'other', 0
             )
         )
 
-    return df_commit_files
+    return df_commit_file
 
 
-def denormalize(df_commit_files, df_commit, col_nms):
+def denormalize(df_commit_file, df_commit, col_nms):
 
     return (
-        df_commit_files
+        df_commit_file
         .merge(
             df_commit[['id'] + col_nms],
             left_on = 'commit_id',
@@ -217,15 +217,15 @@ def prepare_data(config_manager) -> None:
     df_commit = cast_to_ref_types(df_commit)
     df_commit = apply_author_nm_merging(df_commit, config_manager['codebase_nm'])
     
-    df_commit_files = read_raw(config_manager['codebase_nm'], 'commit_files')
-    df_commit_files = handle_file_renaming(df_commit_files)
-    df_commit_files = tag_commit_files(df_commit_files, config_manager)
-    df_commit_files = compute_n_code_lines(df_commit_files)    
-    df_commit_files = denormalize(df_commit_files, df_commit, ['author_nm', 'creation_dt'])
-    df_commit_files = cast_to_ref_types(df_commit_files)
+    df_commit_file = read_raw(config_manager['codebase_nm'], 'commit_file')
+    df_commit_file = handle_file_renaming(df_commit_file)
+    df_commit_file = tag_commit_file(df_commit_file, config_manager)
+    df_commit_file = compute_n_code_lines(df_commit_file)    
+    df_commit_file = denormalize(df_commit_file, df_commit, ['author_nm', 'creation_dt'])
+    df_commit_file = cast_to_ref_types(df_commit_file)
 
     save_cleaned(df_commit, config_manager['codebase_nm'], 'commit')
-    save_cleaned(df_commit_files, config_manager['codebase_nm'], 'commit_files')
+    save_cleaned(df_commit_file, config_manager['codebase_nm'], 'commit_file')
     logger.info("Data preparation complete.")
 
 

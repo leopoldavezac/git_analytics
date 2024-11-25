@@ -33,7 +33,7 @@ class GitLogParser():
             .astype({'id':'str', 'creation_dt':'str', 'author_nm':'str', 'msg':'str'})
         )
 
-        self.df_commit_files = (
+        self.df_commit_file = (
             DataFrame(
                 [],
                 columns=['commit_id', 'file_path', 'n_lines_inserted', 'n_lines_deleted'],
@@ -86,9 +86,9 @@ class GitLogParser():
     def __format_files_info_as_df(self, files_info):
         logger.debug(f"Formatting {len(files_info)} file records into DataFrame.")
         
-        self.df_commit_files = concat([
-            self.df_commit_files,
-            DataFrame(files_info, columns=self.df_commit_files.columns)
+        self.df_commit_file = concat([
+            self.df_commit_file,
+            DataFrame(files_info, columns=self.df_commit_file.columns)
         ], axis=0, ignore_index=True)
 
     def parse_log(self, log:str) -> None:
@@ -102,7 +102,7 @@ class GitLogParser():
         for commit in log:
             commit = commit.split('\n')
             header = commit[0].split('\t')
-            commit_files_info = commit[1:]
+            commit_file_info = commit[1:]
 
             header_nb_attributes = 4
             if len(header) > header_nb_attributes:
@@ -110,15 +110,15 @@ class GitLogParser():
             
             self.df_commit.loc[len(self.df_commit), :] = header
 
-            commit_files_info = self.__parse_files_info(header[0], commit_files_info)
-            files_info += commit_files_info
+            commit_file_info = self.__parse_files_info(header[0], commit_file_info)
+            files_info += commit_file_info
         
         self.__format_files_info_as_df(files_info)
 
     def get_commit_as_dfs(self): 
         logger.info(f"Returning parsed commit DataFrames.")
         
-        return self.df_commit, self.df_commit_files
+        return self.df_commit, self.df_commit_file
 
 
 def parse_git_log(config_manager: ConfigManager) -> None:
@@ -127,13 +127,13 @@ def parse_git_log(config_manager: ConfigManager) -> None:
     git_log_parser = GitLogParser(config_manager['path_to_repo'])
     log = git_log_parser.get_raw_log()
     git_log_parser.parse_log(log)
-    df_commit, df_commit_files = git_log_parser.get_commit_as_dfs()
+    df_commit, df_commit_file = git_log_parser.get_commit_as_dfs()
 
     codebase_name = config_manager['codebase_nm']
     logger.info(f"Saving parsed commit and commit files data for {codebase_name}.")
     
     save_raw(df_commit, codebase_name, 'commit')
-    save_raw(df_commit_files, codebase_name, 'commit_files')
+    save_raw(df_commit_file, codebase_name, 'commit_file')
 
 
 def main() -> None:
