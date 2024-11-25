@@ -23,7 +23,7 @@ CMD_NM = 'prep_data'
 def apply_author_nm_merging(df_commit, codebase_nm):
     logger.info(f"Attempting to apply author name merging for {codebase_nm}.")
     
-    file_path = join('data', codebase_nm, 'author_nm_merging.json')
+    file_path = join('data', f'{codebase_nm}_author_nm_merging.json')
 
     try:
         with open(file_path) as f:
@@ -38,6 +38,7 @@ def apply_author_nm_merging(df_commit, codebase_nm):
         logger.error(f"The file '{file_path}' is not a valid JSON.")
         raise ValueError("The file 'config/author_nm_merging.json' is not a valid JSON.")
 
+    author_nm_mapping = {source: target for target, sources in author_nm_mapping.items() for source in sources}
     df_commit['author_nm'] = df_commit['author_nm'].replace(author_nm_mapping)
 
     return df_commit
@@ -212,19 +213,19 @@ def cast_to_ref_types(df):
 def prepare_data(config_manager) -> None:
     logger.info(f"Preparing data for codebase {config_manager['codebase_nm']}.")
 
-    df_commit = read_raw(config_manager['codebase_nm'], 'commits')
+    df_commit = read_raw(config_manager['codebase_nm'], 'commit')
     df_commit = cast_to_ref_types(df_commit)
     df_commit = apply_author_nm_merging(df_commit, config_manager['codebase_nm'])
     
-    df_commit_files = read_raw(config_manager['codebase_nm'], 'commits_files')
+    df_commit_files = read_raw(config_manager['codebase_nm'], 'commit_files')
     df_commit_files = handle_file_renaming(df_commit_files)
     df_commit_files = tag_commit_files(df_commit_files, config_manager)
     df_commit_files = compute_n_code_lines(df_commit_files)    
     df_commit_files = denormalize(df_commit_files, df_commit, ['author_nm', 'creation_dt'])
     df_commit_files = cast_to_ref_types(df_commit_files)
 
-    save_cleaned(df_commit, config_manager['codebase_nm'], 'commits')
-    save_cleaned(df_commit_files, config_manager['codebase_nm'], 'commits_files')
+    save_cleaned(df_commit, config_manager['codebase_nm'], 'commit')
+    save_cleaned(df_commit_files, config_manager['codebase_nm'], 'commit_files')
     logger.info("Data preparation complete.")
 
 
