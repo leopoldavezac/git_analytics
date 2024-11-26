@@ -11,7 +11,7 @@ knowledge_perenity:
       def:
         concept: specialization
         entity: ['author_nm', 'module_nm']
-        mesure: n_code_lines_inserted
+        mesure: n_lines_inserted
         aggfunc: sum
         normalize_axis: 1
         unstack_level: 0
@@ -24,7 +24,7 @@ knowledge_perenity:
       def:
         concept: specialization
         entity: ['author_nm', 'ext']
-        mesure: n_code_lines_inserted
+        mesure: n_lines_inserted
         aggfunc: sum
         normalize_axis: 1
         unstack_level: 0
@@ -47,7 +47,7 @@ coding_activity:
       def:
         concept: evolution
         freq: M
-        mesure: n_code_lines_inserted
+        mesure: n_lines_inserted
         aggfunc: sum
         xaxis_title: 'Date'
         yaxis_title: 'Number of Lines of Code'
@@ -58,7 +58,7 @@ coding_activity:
       def:
         concept: stability
         freq: M
-        mesure: n_code_lines_inserted
+        mesure: n_lines_inserted
         entity: author_nm
         aggfunc: sum
         normalize_axis: 1
@@ -72,7 +72,7 @@ coding_activity:
       def:
         concept: stability
         freq: M
-        mesure: n_code_lines_inserted
+        mesure: n_lines_inserted
         entity: module_nm
         aggfunc: sum
         normalize_axis: 1
@@ -95,7 +95,7 @@ overview:
       def:
         concept: repartition
         entity: ext
-        mesure: n_code_lines_inserted
+        mesure: n_lines_inserted
         aggfunc: sum
       source_df_nm: commits_files
 
@@ -104,7 +104,7 @@ overview:
       def:
         concept: size
         entity: module_nm
-        mesure: n_code_lines_inserted
+        mesure: n_lines_inserted
         aggfunc: sum
         xaxis_title: 'Number of Lines of Code'
         yaxis_title: 'Module'
@@ -115,7 +115,7 @@ overview:
       def:
         concept: size
         entity: author_nm
-        mesure: n_code_lines_inserted
+        mesure: n_lines_inserted
         aggfunc: sum
         xaxis_title: 'Number of Lines of Code'
         yaxis_title: 'Developer'

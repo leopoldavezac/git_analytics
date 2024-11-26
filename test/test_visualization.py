@@ -16,10 +16,10 @@ def test_integration_visualize(mocker):
 
     EXPECTED_OUTPUT_NMS = [
         '.gitignore',
-        'random_reward_bot_clean_commits_files.parquet',
-        'random_reward_bot_clean_commits.parquet',
-        'random_reward_bot_raw_commits_files.csv',
-        'random_reward_bot_raw_commits.csv'
+        'random_reward_bot_clean_commit_file.parquet',
+        'random_reward_bot_clean_commit.parquet',
+        'random_reward_bot_raw_commit_file.csv',
+        'random_reward_bot_raw_commit.csv'
         ].sort()
 
     config_manager = ConfigManager()

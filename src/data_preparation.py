@@ -146,22 +146,6 @@ def handle_file_renaming(df_commit_file):
     return df_commit_file
 
 
-def compute_n_code_lines(df_commit_file):
-
-    for action_nm in ['inserted', 'deleted']:
-
-        n_lines_action_nm = f'n_lines_{action_nm}'
-        n_code_lines_action_nm = f'n_code_lines_{action_nm}'
-
-        df_commit_file[n_code_lines_action_nm] = (
-            df_commit_file[n_lines_action_nm].where(
-                df_commit_file.ext != 'other', 0
-            )
-        )
-
-    return df_commit_file
-
-
 def denormalize(df_commit_file, df_commit, col_nms):
 
     return (
@@ -185,8 +169,6 @@ def cast_to_ref_types(df):
         'msg':'string',
         'author_nm':'string',
         'file_path':'string',
-        'n_code_lines_inserted':'uint32',
-        'n_code_lines_deleted':'uint32',
         'n_lines_inserted':'uint32',
         'n_lines_deleted':'uint32',
         'commit_id':'string',
@@ -220,7 +202,6 @@ def prepare_data(config_manager) -> None:
     df_commit_file = read_raw(config_manager['codebase_nm'], 'commit_file')
     df_commit_file = handle_file_renaming(df_commit_file)
     df_commit_file = tag_commit_file(df_commit_file, config_manager)
-    df_commit_file = compute_n_code_lines(df_commit_file)    
     df_commit_file = denormalize(df_commit_file, df_commit, ['author_nm', 'creation_dt'])
     df_commit_file = cast_to_ref_types(df_commit_file)
 

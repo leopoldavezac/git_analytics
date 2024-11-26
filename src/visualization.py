@@ -34,6 +34,7 @@ class Dashboard:
         self.codebase_nm = codebase_nm
        
         self.df_base = read_cleaned(codebase_nm, 'commit_file')
+        self.df_base = self.df_base.query('ext != "other"')
         self.df_current = self.df_base.copy(deep=True)
 
         if 'component_nm' in self.df_base.columns:
@@ -178,7 +179,7 @@ class Dashboard:
         key_labels = (
             self.df_base
             .groupby(axis)
-            .n_code_lines_inserted.sum()
+            .n_lines_inserted.sum()
             .sort_values(ascending=False)
             .pipe(lambda srx: srx.loc[srx > min_prop_of_max * srx.iloc[0]].index.tolist())
         )
