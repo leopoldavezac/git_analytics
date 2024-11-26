@@ -44,7 +44,14 @@ class Dashboard:
 
         self.app = Dash(__name__, external_stylesheets=[BOOTSTRAP])
 
+        self.handle_mono_language_case()
         self.init_filter()
+
+    def handle_mono_language_case(self):
+
+        if self.df_base.ext.nunique() == 1:
+            del self.specs['knowledge_perenity']['layout']['lang_specialization']
+            del self.specs['knowledge_perenity']['stats']['lang_specialization']
 
     def init_filter(self):
         logger.info("Initializing filters for Dashboard.")
@@ -167,6 +174,8 @@ class Dashboard:
         logger.info("Focusing on key labels for each analysis axis.")
         
         for axis in self.analysis_axis:
+            if axis == 'ext':
+                continue
             key_labels = self.compute_key_labels(axis)
             self.update_filter_state(axis, key_labels)
 
