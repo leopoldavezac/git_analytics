@@ -92,7 +92,34 @@ class Transformer:
             else:
                 raise UnknownOperation(f'Operation: {operation_nm} is not supported')
 
+    def __compute_freq(self, df):
+
+        N = 30
+
+        start_time = df.index.min()
+        end_time = df.index.max()
+        total_duration = end_time - start_time
+
+        interval_duration = total_duration / N
+        days = interval_duration.total_seconds() // (60*60*24)
+
+        if days < 7:
+            freq = '1D'
+        elif days < 30:
+            freq = 'W'
+        elif days < 90:
+            freq = 'M'
+        elif days < 365:
+            freq = 'Q'
+        else:
+            freq = 'Y'
+        
+        return freq
+    
     def get_transformed(self, df):
+
+        if (self.concept in ['evolution', 'stability']) and (self.freq == 'auto'):
+            self.freq = self.__compute_freq(df)
 
         for operation_nm in self.operations:
             df = self.__get_operation_result(df, operation_nm)

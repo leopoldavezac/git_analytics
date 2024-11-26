@@ -58,7 +58,7 @@ coding_activity:
       nm: 'Development Activity Overall'
       def:
         concept: evolution
-        freq: M
+        freq: auto
         mesure: n_lines_inserted
         aggfunc: sum
         xaxis_title: 'Date'
@@ -69,7 +69,7 @@ coding_activity:
       nm: 'Development Activity by Developer'
       def:
         concept: stability
-        freq: M
+        freq: auto
         mesure: n_lines_inserted
         entity: author_nm
         aggfunc: sum
@@ -83,7 +83,7 @@ coding_activity:
       nm: 'Development Activity by Module'
       def:
         concept: stability
-        freq: M
+        freq: auto
         mesure: n_lines_inserted
         entity: module_nm
         aggfunc: sum
@@ -97,7 +97,7 @@ coding_activity:
       nm: 'Development Activity by Component'
       def:
         concept: stability
-        freq: M
+        freq: auto
         mesure: n_lines_inserted
         entity: component_nm
         aggfunc: sum
