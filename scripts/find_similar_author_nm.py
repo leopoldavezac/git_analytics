@@ -6,7 +6,7 @@ import pandas as pd
 
 from thefuzz import fuzz
 
-CODEBASE_NM = 'sklearn'
+CODEBASE_NM = '<codebase_nm>'
 
 def compute_author_nm_mapping(sr, threshold=80):
     mapping = {}  
@@ -40,6 +40,6 @@ f_path = join('.', 'data', f'{CODEBASE_NM}_raw_commit.csv')
 sr_author_nm = pd.read_csv(f_path)['author_nm'].drop_duplicates()
 author_nm_mapping = compute_author_nm_mapping(sr_author_nm, threshold=80)
 
-f_path = join('.', 'data', f"{CODEBASE_NM}_author_nm_merging.json")
+f_path = join('.', 'data', f"{CODEBASE_NM}_author_nm_mapping.json")
 with open(f_path, 'w') as f:
     dump(author_nm_mapping, f, indent=4)

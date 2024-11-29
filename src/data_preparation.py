@@ -23,7 +23,7 @@ CMD_NM = 'prep_data'
 def apply_author_nm_merging(df_commit, codebase_nm):
     logger.info(f"Attempting to apply author name merging for {codebase_nm}.")
     
-    file_path = join('data', f'{codebase_nm}_author_nm_merging.json')
+    file_path = join('data', f'{codebase_nm}_author_nm_mapping.json')
 
     try:
         with open(file_path) as f:
