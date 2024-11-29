@@ -1,15 +1,17 @@
-# Repo Health Analyzer
+# Git Analytics
 
-Repo Heath Analyzer is the tool for assesing a codebase perinity in minutes using just the git log.
+Git Analytics is a tool for assesing a codebase perinity & understand team dynamics in minutes using just the git log.
 
 What you can do with this tool :
 
 - Find out which developper is key : who has knowledge of what
 - Learns about past activity : what are the stable parts of the code what are the moving parts
 
-You can also use it to just parse a git log into a nice format for your data analysis.
+You can also use it to just parse a git log into a nice format for your own data analysis.
 
-Special thanks to @er-vin for which work on ComDaAn from which I have draw inspiration.
+Special thanks to @er-vin for his work on ComDaAn from which I have draw inspiration from for the git log parser.
+
+The best use cases for this tool are corporate repos with small to medium team with clear codebase structure (module & components).
 
 ## Installation
 
@@ -22,40 +24,345 @@ pip install -r requirements.txt
 pip install -e .
 ```
 
-## Execution
+## Demo
 
-Run one of the following command with the required arguments : **parse_git**, **prep_data**, **visualize**. To know more on the different command just run 
-
-```
-<command> -h
-```
-
-For example,
+Let's use scikit learn repo as our use case example,
 
 ```
-parse_git -h
-usage: parse_git [-h] codebase_nm path_to_repo
-
-parse the git log of a codebase into a tabular format.
-
-positional arguments:
-  codebase_nm   identifier for the the codebase for which you wanna parse the git
-  path_to_repo  local path to the codebase repository
-
-options:
-  -h, --help    show this help message and exit
+/scikit-learn
+└── .git/
+├── benchmarks/
+├── build_tools/
+├── doc/
+└── sklearn/
+    ├── __check_build/
+    ├── base.py
+    ├── cluster/
+    ├── compose/
+    ├── covariance/
+    ├── datasets/
+    ├── decomposition/
+    ├── ensemble/
+    ├── feature_extraction/
+    ├── feature_selection/
+    ├── gaussian_process/
+    ├── linear_model/
+    ├── metrics/
+    ├── model_selection/
+    ├── naive_bayes.py
+    ├── neighbors/
+    ├── pipeline.py
+    ├── preprocessing/
+    ├── svm/
+    ├── tree/
+    └── utils/
 ```
+
+### 1. **Parse the Git Log**
+
+The first step is to parse the git log of scikit-learn repository using the `parse_git` command. 
+
+```bash
+parse_git sklearn /path/to/scikit-learn
+```
+
+#### Arguments explanation 
+
+- **codebase_nm** we choose ecommerce_web_app as our codebase name.
+- **path_to_repo** the local path to the repo is /path/to/scikit-learn
+
+#### Output
+
+By running this command, the git history is parsed to generate two views of the git log: one at the commit level (sklearn_raw_commit.csv) and the other at the file level (sklearn_raw_commit_file.csv).
+
+```
+>>> df_commit.head()
+                                         id                creation_dt           author_nm                                                msg
+0  a54633b08665e7bf35fecba6b63feaba131b4606  2024-11-20 17:34:44 +0100   Sylvain Combettes  DOC fix typo in cyclical feature engineering e...
+1  d2e72206507494f96d304a660d492f4b65942a44  2024-11-20 20:28:33 +1100            Lucy Liu  DOC Add info when `scoring = None` in `cross_v...
+2  4b116f0af57d933fe7af3374d016fc97723b5bad  2024-11-19 23:45:04 +0100  Guillaume Lemaitre  MAINT add deprecation for transition to new de...
+3  a573692c6220f2f0d1cacdea51b3fbb4b891f9c9  2024-11-19 06:29:04 -0500    Aaron Schumacher  FOC fix link for dictionary learning paper (#3...
+4  4adafd9ceb8e67467b81654c3632cd99c203df40  2024-11-19 08:59:31 +0100           viktor765  DOC: Clarify the sign in log marginal likeliho...
+
+>>> df_commit_file.head()
+                                  commit_id                                          file_path  n_lines_inserted  n_lines_deleted
+0  a54633b08665e7bf35fecba6b63feaba131b4606  examples/applications/plot_cyclical_feature_en...                 1                1
+1  d2e72206507494f96d304a660d492f4b65942a44             sklearn/model_selection/_validation.py                 2                1
+2  4b116f0af57d933fe7af3374d016fc97723b5bad                                    sklearn/base.py                32                0
+3  4b116f0af57d933fe7af3374d016fc97723b5bad                       sklearn/tests/test_common.py                35                0
+4  a573692c6220f2f0d1cacdea51b3fbb4b891f9c9                      doc/modules/decomposition.rst                 2                2
+```
+
+More on the output files [here](#raw-files).
+
+### 2. **Prepare the Data**
+
+Next, use the `prep_data` command to clean, format, and enrich the parsed git log data.
+
+```bash
+prep_data sklearn sklearn 2
+```
+
+#### Arguments explanation 
+
+- **codebase_nm** The codebase name is sklearn.
+- **src_path** The source path is sklearn.
+- **module_depth** The module depth is 2. Indeed, modules are the end level directories : cluster, tree, ensemble, etc. Those are at a depth of two from the root of repo.
+
+More on how to define modules (& components) [here](#modules-&-components)
+
+#### Output 
+
+By running this command, the raw files generated by `parse_git`, are cleaned and enriched with additionnal columns such as module, file_extension, etc. to create the files : sklearn_clean_commit.parquet & sklearn_clean_commit_file.parquet.
+
+```
+>>> df_commit.head()
+                                         id               creation_dt           author_nm                                                msg
+0  a54633b08665e7bf35fecba6b63feaba131b4606 2024-11-20 16:34:44+00:00   Sylvain Combettes  DOC fix typo in cyclical feature engineering e...
+1  d2e72206507494f96d304a660d492f4b65942a44 2024-11-20 09:28:33+00:00            Lucy Liu  DOC Add info when `scoring = None` in `cross_v...
+2  4b116f0af57d933fe7af3374d016fc97723b5bad 2024-11-19 22:45:04+00:00  Guillaume Lemaitre  MAINT add deprecation for transition to new de...
+3  a573692c6220f2f0d1cacdea51b3fbb4b891f9c9 2024-11-19 11:29:04+00:00    Aaron Schumacher  FOC fix link for dictionary learning paper (#3...
+4  4adafd9ceb8e67467b81654c3632cd99c203df40 2024-11-19 07:59:31+00:00           viktor765  DOC: Clarify the sign in log marginal likeliho...
+
+>>> df_commit_file.head()
+                                  commit_id                                          file_path  n_lines_inserted  n_lines_deleted    ext  is_src        module_nm           author_nm               creation_dt
+0  a54633b08665e7bf35fecba6b63feaba131b4606  examples/applications/plot_cyclical_feature_en...                 1                1     py   False             <NA>   Sylvain Combettes 2024-11-20 16:34:44+00:00
+1  d2e72206507494f96d304a660d492f4b65942a44             sklearn/model_selection/_validation.py                 2                1     py    True  model_selection            Lucy Liu 2024-11-20 09:28:33+00:00
+2  4b116f0af57d933fe7af3374d016fc97723b5bad                                    sklearn/base.py                32                0     py    True             base  Guillaume Lemaitre 2024-11-19 22:45:04+00:00
+3  4b116f0af57d933fe7af3374d016fc97723b5bad                       sklearn/tests/test_common.py                35                0     py    True            tests  Guillaume Lemaitre 2024-11-19 22:45:04+00:00
+4  a573692c6220f2f0d1cacdea51b3fbb4b891f9c9                      doc/modules/decomposition.rst                 2                2  other   False             <NA>    Aaron Schumacher 2024-11-19 11:29:04+00:00
+```
+
+More on the output files [here](#cleaned-files).
+
+### 3. **Visualize the Data**
+
+```bash
+visualize sklearn
+```
+
+#### Arguments explanation 
+
+- **codebase_nm** The codebase name is sklearn.
+
+#### Output
+
+By running this command a dashboard will pop up at, http://127.0.0.1:8050/, so that you can analyze and navigate the git history of your repo.
+
+GIF OF DASHBOARD
+
+## Command documentation
+
+### Command: `parse_git`
+
+#### Description
+Parses the git log of a repository into a tabular format for further processing.
+
+#### Usage
+
+```bash
+parse_git [-h] codebase_nm path_to_repo
+```
+
+#### Positional Arguments
+- **`codebase_nm`**: Identifier for the codebase whose git log you want to parse.
+- **`path_to_repo`**: Local path to the codebase repository.
+
+#### Options
+- **`-h, --help`**: Show the help message and exit.
+
+---
+
+### Command: `prep_data`
+
+#### Description
+Cleans, formats, and enriches the parsed git log. Prepares the data for visualization and analysis.
+
+#### Usage
+```bash
+prep_data [-h] [--component_nms [COMPONENT_NMS ...]] [--component_depth COMPONENT_DEPTH] [--rerun RERUN] codebase_nm src_path module_depth
+```
+
+#### Positional Arguments
+- **`codebase_nm`**: Identifier for the codebase.
+- **`src_path`**: Path to the source code directory from the root of the repository.
+- **`module_depth`**: Depth of the modules in the source directory structure.
+
+#### Options
+- **`-h, --help`**: Show the help message and exit.
+- **`--component_nms [COMPONENT_NMS ...], -cn [COMPONENT_NMS ...]`**: List of component names to include in the analysis.
+- **`--component_depth COMPONENT_DEPTH, -cd COMPONENT_DEPTH`**: Depth of components from the root of the source directory.
+- **`--rerun RERUN, -r RERUN`**: Force rerun of any preceding commands.
+
+More on how to define modules (& components) [here](#modules-&-components)
+
+---
+
+### Command: `visualize`
+
+#### Description
+Generates visualizations and insights from the parsed and processed git data.
+
+#### Usage
+```bash
+visualize [-h] [--path_to_repo PATH_TO_REPO] [--src_path SRC_PATH] [--module_depth MODULE_DEPTH] [--component_nms [COMPONENT_NMS ...]]
+          [--component_depth COMPONENT_DEPTH] [--has_components HAS_COMPONENTS] [--rerun RERUN] codebase_nm
+```
+
+#### Positional Arguments
+- **`codebase_nm`**: Identifier for the codebase.
+
+#### Options
+- **`-h, --help`**: Show the help message and exit.
+- **`--path_to_repo PATH_TO_REPO, -pr PATH_TO_REPO`**: Local path to the repository.
+- **`--src_path SRC_PATH, -sp SRC_PATH`**: Path to the source code directory from the root.
+- **`--module_depth MODULE_DEPTH, -md MODULE_DEPTH`**: Depth of modules from the root of the source directory.
+- **`--component_nms [COMPONENT_NMS ...], -cn [COMPONENT_NMS ...]`**: List of components to include in the visualization.
+- **`--component_depth COMPONENT_DEPTH, -cd COMPONENT_DEPTH`**: Depth of components from the root directory.
+- **`--has_components HAS_COMPONENTS, -hc HAS_COMPONENTS`**: Indicates if components were specified when running `prep_data`.
+- **`--rerun RERUN, -r RERUN`**: Force rerun of any preceding commands.
 
 The three commands works sequentially and depend on each other, prep_data expect a passed execution of parse_git and visualize of the others two.
 You can either run them one by one or directly run visualize and pass it all the required arguments for parse_git & prep_data.
 
-## Key concepts
 
-In order to help you analyze the git log of your codebase, Repo Health Analyzer assume that your codebase is organized in modules & components. 
+### **Modules & Components**
 
-- Module : Modules definition depend on the codebase file structure they can be file or directory. In the example, of an e-commerce web site modules might be : products, search, checkout etc.
-- Component : (optionnal) Component is another axis of structure of your code that is shared accross module. If we take again the e-commerce example component might be : view, control, model.
+Our definition of what a module & a component are is inherited from software architecture. They are key analysis axis that are created in the data preparation step & used for the generated graphics in the visualization step.
+
+#### **Module**
+
+A **module** is defined as a self-contained, logically cohesive unit of software that encapsulates a specific set of functionalities. 
+---
+
+#### **Defining modules for Git Analytics**
+
+- **Criteria**: Modules should align with high-level functional areas of the application.
+- **Depth**: Modules must be organized as same-level directories or files within the `src` folder.
+---
+
+#### **Components (Optional)**
+
+**Components** are **transversal** to modules, providing a consistent structure or pattern that modules follow. Components represent specific roles or responsibilities within each module, often corresponding to standard design patterns like MVC (Model-View-Controller).
+
+Because not all codebase have components, we have made them optionnal.
+
+---
+
+#### **Defining components for Git Analytics**
+
+- **Criteria**: Components are defined by their roles in the application’s architecture.
+- **Depth**: Components are identified by their depth level from the root directory, similar to modules.
+- **Names**: Because component & modules can be at the same depth level, components must also be explicitly named.
+
+---
+
+### **Example Directory Structure**
+
+For an e-commerce web application, the directory structure could look like this:
+
+```
+/ecommerce-web-app
+│
+├── src/
+│   ├── search/                  
+│   │   ├── view/                
+│   │   ├── control/             
+│   │   └── model/                 
+│   ├── checkout/                
+│   │   ├── view/                
+│   │   ├── control/             
+│   │   └── model/                
+│   ├── products/                
+│   │   ├── view/                
+│   │   ├── control/              
+│   │   └── model/                
+│   ├── user-management/         
+│   ├── shopping-cart/           
+│   └── order-management/        
+│
+└── .git/                       
+```
+
+In this example,
+
+- **modules** are search, checkout, products, use-management, shopping-cart, order-management and are at depth 2
+- **components** are view, control, model and are at depth 3
+
+The associated prep_data command for this repo would be as follows : 
+
+```bash
+prep_data e-commerce-web-app src 2 -cd 3 -cn view control model
+```
+
+## Data documentation
+
+### Raw files
+
+**commit.csv**
+
+This dataset provides commit-level metadata for the repository. Each row represents a commit with details about its creation date, author, and commit message. 
+
+- **id**: `string` - A unique identifier (SHA hash) for each commit.  
+- **creation_dt**: `string` - The timestamp of when the commit was created.  
+- **author_nm**: `string` - The name of the author who made the commit.  
+- **msg**: `string` - The commit message describing the changes made.  
+
+**commit_file.csv**
+
+This dataset contains file-level data for each commit made in the repository. Each row represents a file affected by a commit.
+
+- **commit_id**: `string` - A unique identifier (SHA hash) for each commit.  
+- **file_path**: `string` - The full path of the file affected by the commit.  
+- **n_lines_inserted**: `integer` - The number of lines of code added to the file in the commit.  
+- **n_lines_deleted**: `integer` - The number of lines of code removed from the file in the commit.  
+
+### Cleaned files
+
+**cleaned_commit.parquet**
+
+This dataset is just a cleaned version of commit.csv.
+
+- **id**: `string` - A unique identifier (SHA hash) for each commit.
+- **creation_dt**: `datetime64[ns, UTC]` - The timestamp of when the commit was created, including timezone information.
+- **author_nm**: `string` - The name of the author who made the commit.
+- **msg**: `string` - The commit message describing the purpose or changes made in the commit.
+- **n_lines_inserted**: uint32 - The number of lines of code added in the commit.
+
+**cleaned_commit_file.parquet**
+
+This dataset is just a cleaned version of commit_file.csv.
+
+- **commit_id**: `string` - the id (SHA hash) of the associated commit.
+- **file_path**: `string` - The path of the commited file.
+- **ext**: `string` - The file extension, indicating the file type (e.g., .py, .js, etc.).
+- **is_src**: `bool` - Indicates whether the file is part of the source code (True) or not (False).
+- **module_nm**: `string` - The logical module of the file within the codebase. *Can be null*.
+- **component_nm** (optional): `string` - The logical component of the file within the codebase. *Can be null*
+- **n_lines_inserted**: `uint32` - The number of lines of code added to the file in the commit.
+- **n_lines_deleted**: `uint32` - The number of lines of code removed from the file in the commit.
+- **author_nm**: `string` - The name of the author who made the commit.
+- **creation_dt**: `datetime64[ns, UTC]` - The timestamp of when the commit was created, including timezone information.
 
 ## Correcting git log data
 
+### Author Name Merging
+
+#### **Why?**
+Inconsistent author names can occur in git logs due to typos, different casing, or alternate spellings (e.g., *John Doe*, *john doe*, and *J. Doe*). This can lead to misleading or fragmented data when analyzing contributions, as a single developer may appear to have multiple identities.
+
+#### **How?**
+
+1. **Identify Similar Author Names**:
+   Use the `find_similar_author_nm.py` script to automatically identify author names with high similarity based on a string-matching algorithm. Make sur to update the constant CODEBASE_NM with the appropriate value.
+
+2. **Review the Generated Mapping**:
+   The script outputs a proposed mapping of similar names to unify into a single canonical name. This mapping file (`<codebase_nm>_author_nm_mapping.json`) must be reviewed and corrected manually if necessary.
+
+3. **Apply the Mapping**:
+   Rerun the data preparation step (`prep_data`) to apply the corrected author name mapping and update the processed data files.
+
+### Others
+
 If you need to make corrections to your data (ex: exclude a file or a period) you can do so by directly updating the <codebase>_clean_commits.parquet & <codebase>_clean_commits_files.parquet. Make sure you don't alter the files format.
+
