@@ -40,14 +40,14 @@ def check_if_command_has_run(cmd_nm, codebase_nm):
 
     return cmd_output_nm in listdir(DATA_PATH)
 
-def run_predecessor(cmd_nm: str, config_manager: ConfigManager) -> None:
+def run_predecessor(cmd_nm, config_manager, first_cmd=True) -> None:
     precursor_cmd_nm = CMD_NM_TO_PRECURSOR_CMD_NM.get(cmd_nm)
 
     if precursor_cmd_nm is None:  
         run_cmd(cmd_nm, config_manager)
     else:
         if config_manager['rerun'] or not check_if_command_has_run(precursor_cmd_nm, config_manager['codebase_nm']):
-            run_predecessor(precursor_cmd_nm, config_manager)  
+            run_predecessor(precursor_cmd_nm, config_manager, first_cmd=False)  
 
-        if cmd_nm != "visualize":
+        if first_cmd == False:
             run_cmd(cmd_nm, config_manager)
