@@ -1,5 +1,9 @@
 # Git Analytics
 
+<img src="./demo.gif" width="100%"/>
+
+----
+
 Git Analytics is a tool for assesing a codebase perinity & understand team dynamics in minutes using just the git log.
 
 What you can do with this tool :
@@ -149,7 +153,7 @@ visualize sklearn
 
 By running this command a dashboard will pop up at, http://127.0.0.1:8050/, so that you can analyze and navigate the git history of your repo.
 
-GIF OF DASHBOARD
+<img src="./demo.gif" width="100%"/>
 
 ## Command documentation
 
