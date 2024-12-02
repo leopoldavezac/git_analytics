@@ -82,8 +82,8 @@ class Dashboard:
     def get_header(self):
         return html.Div(
             [
-                html.H1('LibPerenity', style={'textAlign': 'center'}),
-                html.H3('Make sure your dependencies are reliable', style={'textAlign': 'center'}),
+                html.H1('Git Analytics', style={'textAlign': 'center'}),
+            html.H3('Analyze dev activity in a few clicks', style={'textAlign': 'center'}),
                 html.Br(),
             ]
         )
