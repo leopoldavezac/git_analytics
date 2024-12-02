@@ -230,14 +230,13 @@ The three commands works sequentially and depend on each other, prep_data expect
 You can either run them one by one or directly run visualize and pass it all the required arguments for parse_git & prep_data.
 
 
-### **Modules & Components**
+## **Modules & Components**
 
 Our definition of what a module & a component are is inherited from software architecture. They are key analysis axis that are created in the data preparation step & used for the generated graphics in the visualization step.
 
-#### **Module**
+### **Module**
 
 A **module** is defined as a self-contained, logically cohesive unit of software that encapsulates a specific set of functionalities. 
----
 
 #### **Defining modules for Git Analytics**
 
@@ -245,7 +244,7 @@ A **module** is defined as a self-contained, logically cohesive unit of software
 - **Depth**: Modules must be organized as same-level directories or files within the `src` folder.
 ---
 
-#### **Components (Optional)**
+### **Components (Optional)**
 
 **Components** are **transversal** to modules, providing a consistent structure or pattern that modules follow. Components represent specific roles or responsibilities within each module, often corresponding to standard design patterns like MVC (Model-View-Controller).
 
