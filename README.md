@@ -4,7 +4,7 @@
 
 ----
 
-Git Analytics is a tool for assesing a codebase perinity & understand team dynamics in minutes using just the git log.
+Git Analytics is a tool for assesing a codebase perinity & understanding team dynamics in minutes using just the git log.
 
 What you can do with this tool :
 
